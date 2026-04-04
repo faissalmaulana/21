@@ -44,6 +44,8 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { getProjects, PROJECTS_KEY, type GetProjectsParams } from "@/api/resources";
 import { LoadingPage } from "@/components/loading-page";
+import { ErrorPage } from "@/components/error-page";
+import { AppError } from "@/lib/app-error";
 
 
 export default function Projects() {
@@ -68,7 +70,12 @@ export default function Projects() {
   }
 
   if (isError) {
-    return <span>Error: {error.message}</span>
+    const appError = error instanceof AppError ? error : new AppError({ status: 500, message: "Something when wrong" });
+    return (
+      <div className="h-screen flex flex-col justify-center">
+        <ErrorPage status={appError.status} message={appError.message} description={appError?.description} />
+      </div>
+    );
   }
 
   return (
