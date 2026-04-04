@@ -3,6 +3,11 @@ interface Project {
   name: string
 }
 
-export {
-  type Project
+interface GetProjectsParams {
+  search?: string
+}
+
+export type {
+  Project,
+  GetProjectsParams
 }
