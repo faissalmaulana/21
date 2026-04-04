@@ -5,6 +5,7 @@ interface Project {
 
 interface GetProjectsParams {
   search?: string
+  withArchive?: boolean
 }
 
 export type { Project, GetProjectsParams }

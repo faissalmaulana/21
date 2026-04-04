@@ -20,8 +20,8 @@ import {
   ItemTitle,
 } from "@/components/ui/item"
 import { Separator } from "@/components/ui/separator"
-import { Link } from "react-router"
-import { useState } from "react"
+import { Link, useSearchParams } from "react-router"
+import { useEffect, useState } from "react"
 import { Switch } from "@/components/ui/switch"
 import {
   AlertDialog,
@@ -60,18 +60,55 @@ import {
 import { LoadingPage } from "@/components/loading-page"
 import { ErrorPage } from "@/components/error-page"
 import { AppError } from "@/lib/app-error"
+import useDebounce from "@/hooks/use-debounce"
 
 export default function Projects() {
   const [alertArchiveOpen, setAlertArchiveOpen] = useState(false)
   const [alertDeleteOpen, setAlertDeleteOpen] = useState(false)
+  const [uRLSearchParams, setURLSearchParams] = useSearchParams()
+  const [searchInput, setSearchInput] = useState<string>(uRLSearchParams.get("search") ?? "")
+  const [withArchive, setWithArchive] = useState<boolean>(
+    () => uRLSearchParams.get("archive") === "true"
+  )
+
+  const debouncedSearch = useDebounce<string>(searchInput, 500)
 
   const queryOpt: GetProjectsParams = {
-    search: undefined,
+    search: debouncedSearch,
+    withArchive: withArchive
   }
   const { data, isPending, isError, error } = useQuery({
     queryKey: [PROJECTS_KEY, queryOpt],
     queryFn: () => getProjects(queryOpt),
   })
+
+  const handleSearchChangeInput = (val: string) => {
+    setSearchInput(val)
+  }
+
+  const handleWithArchive = (checked: boolean) => {
+    setWithArchive(checked)
+  }
+
+  useEffect(() => {
+    setURLSearchParams((prev) => {
+      const params = new URLSearchParams(prev)
+
+      if (!debouncedSearch) {
+        params.delete("search")
+      } else {
+        params.set("search", debouncedSearch)
+      }
+
+      if (withArchive) {
+        params.set("archive", "true")
+      } else {
+        params.delete("archive")
+      }
+
+      return params
+    })
+  }, [debouncedSearch, setURLSearchParams, withArchive])
 
   if (isPending) {
     return (
@@ -107,7 +144,7 @@ export default function Projects() {
             <div className="space-y-4">
               <div>
                 <InputGroup>
-                  <InputGroupInput placeholder="Search..." />
+                  <InputGroupInput autoComplete="false" placeholder="Search..." value={searchInput} onChange={(e) => handleSearchChangeInput(e.target.value)} />
                   <InputGroupAddon>
                     <Search />
                   </InputGroupAddon>
@@ -116,7 +153,7 @@ export default function Projects() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-x-4">
                   <span className="text-muted-foreground">Archive only</span>
-                  <Switch className={"cursor-pointer"} />
+                  <Switch className={"cursor-pointer"} checked={withArchive} onCheckedChange={handleWithArchive} />
                 </div>
                 <Dialog>
                   <form>

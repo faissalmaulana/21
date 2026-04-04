@@ -15,6 +15,10 @@ async function getProjects(
     url.searchParams.set("search", opt.search)
   }
 
+  if (opt.withArchive) {
+    url.searchParams.set("archive", "true")
+  }
+
   const response = await fetch(url.toString())
 
   const result: RawResponse<{
