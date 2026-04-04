@@ -43,6 +43,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { getProjects, PROJECTS_KEY, type GetProjectsParams } from "@/api/resources";
+import { LoadingPage } from "@/components/loading-page";
 
 
 export default function Projects() {
@@ -59,7 +60,11 @@ export default function Projects() {
 
 
   if (isPending) {
-    return <span>Loading...</span>
+    return (
+      <div className="h-screen flex flex-col justify-center ">
+        <LoadingPage title="Loading projects..." />
+      </div>
+    )
   }
 
   if (isError) {
