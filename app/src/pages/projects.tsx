@@ -42,19 +42,21 @@ import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
-import { getProjects, PROJECTS_KEY } from "@/api/resources";
-
+import { getProjects, PROJECTS_KEY, type GetProjectsParams } from "@/api/resources";
 
 
 export default function Projects() {
-  const { data, isPending, isError, error } = useQuery({
-    queryKey: [PROJECTS_KEY],
-    queryFn: getProjects
-  })
-
-
   const [alertArchiveOpen, setAlertArchiveOpen] = useState(false);
   const [alertDeleteOpen, setAlertDeleteOpen] = useState(false);
+
+  const queryOpt: GetProjectsParams = {
+    search: undefined
+  }
+  const { data, isPending, isError, error } = useQuery({
+    queryKey: [PROJECTS_KEY, queryOpt],
+    queryFn: () => getProjects(queryOpt)
+  })
+
 
   if (isPending) {
     return <span>Loading...</span>
@@ -63,7 +65,6 @@ export default function Projects() {
   if (isError) {
     return <span>Error: {error.message}</span>
   }
-
 
   return (
     <>
