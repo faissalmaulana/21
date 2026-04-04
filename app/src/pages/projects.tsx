@@ -82,114 +82,115 @@ export default function Projects() {
   }
 
   return (
-    <div>
-      <div className="my-4 mx-24">
-        <div className="flex flex-col space-y-4 justify-between">
-          <h2 className="text-2xl font-semibold">My Projects</h2>
-          <div className="space-y-4">
-            <div>
-              <InputGroup>
-                <InputGroupInput placeholder="Search..." />
-                <InputGroupAddon>
-                  <Search />
-                </InputGroupAddon>
-              </InputGroup>
-            </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-x-4">
-                <span className="text-muted-foreground">Archive only</span>
-                <Switch className={"cursor-pointer"} />
+    <>
+      <div>
+        <div className="my-4 mx-24">
+          <div className="flex flex-col space-y-4 justify-between">
+            <h2 className="text-2xl font-semibold">My Projects</h2>
+            <div className="space-y-4">
+              <div>
+                <InputGroup>
+                  <InputGroupInput placeholder="Search..." />
+                  <InputGroupAddon>
+                    <Search />
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
-              <CreateNewProjectForm>
-                <div className="flex items-center gap-x-2 bg-primary text-primary-foreground p-1 rounded-md cursor-pointer">
-                  <Plus />
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-x-4">
+                  <span className="text-muted-foreground">Archive only</span>
+                  <Switch className={"cursor-pointer"} />
                 </div>
-              </CreateNewProjectForm>
-            </div>
-          </div>
-
-          <div>
-            <h4>{data.pagination.total_items_in_page} projects</h4>
-            <Separator />
-            <div className="my-3">
-              <ItemGroup>
-                {data.projects.map((project) => (
-                  <Item key={project.id}>
-                    <ItemMedia variant="icon">
-                      <Hash />
-                    </ItemMedia>
-                    <ItemContent>
-                      <Link to={project.id}>
-                        <ItemTitle>{project.name}</ItemTitle>
-                      </Link>
-                    </ItemContent>
-
-                    <ItemActions>
-                      {/*ARCHIVE ALERT*/}
-                      <AlertDialog open={alertArchiveOpen} onOpenChange={setAlertArchiveOpen}>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction>Continue</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      {/*DELETE ALERT*/}
-                      <AlertDialog open={alertDeleteOpen} onOpenChange={setAlertDeleteOpen}>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction>Continue</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant={"ghost"} className={"cursor-pointer"}><Ellipsis /></Button>} />
-                        <DropdownMenuContent>
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem className={"cursor-pointer"} onClick={() => setAlertArchiveOpen(true)}>
-                              <Archive />
-                              Archive
-                            </DropdownMenuItem>
-
-                            <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => setAlertDeleteOpen(true)}>
-                              <Trash />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </ItemActions>
-                  </Item>
-                ))}
-              </ItemGroup>
+                <CreateNewProjectForm>
+                  <div className="flex items-center gap-x-2 bg-primary text-primary-foreground p-1 rounded-md cursor-pointer">
+                    <Plus />
+                  </div>
+                </CreateNewProjectForm>
+              </div>
             </div>
 
-            <div className="self-end">
-              <Pagination>
-                <PaginationContent>
-                  {Array.from({ length: data.pagination.total_pages }, (_, i) => (
-                    <PaginationItem key={i}>
-                      <PaginationLink href={`?page=${i + 1}`}>
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
+            <div>
+              <h4>{data.pagination.total_items_in_page} projects</h4>
+              <Separator />
+              <div className="my-3">
+                <ItemGroup>
+                  {data.projects.map((project) => (
+                    <Item key={project.id}>
+                      <ItemMedia variant="icon">
+                        <Hash />
+                      </ItemMedia>
+                      <ItemContent>
+                        <Link to={project.id}>
+                          <ItemTitle>{project.name}</ItemTitle>
+                        </Link>
+                      </ItemContent>
+
+                      <ItemActions>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger render={<Button variant={"ghost"} className={"cursor-pointer"}><Ellipsis /></Button>} />
+                          <DropdownMenuContent>
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem className={"cursor-pointer"} onClick={() => setAlertArchiveOpen(true)}>
+                                <Archive />
+                                Archive
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => setAlertDeleteOpen(true)}>
+                                <Trash />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </ItemActions>
+                    </Item>
                   ))}
-                </PaginationContent>
-              </Pagination>
+                </ItemGroup>
+              </div>
+
+              <div className="self-end">
+                <Pagination>
+                  <PaginationContent>
+                    {Array.from({ length: data.pagination.total_pages }, (_, i) => (
+                      <PaginationItem key={i}>
+                        <PaginationLink href={`?page=${i + 1}`}>
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                  </PaginationContent>
+                </Pagination>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      {/*ARCHIVE ALERT*/}
+      <AlertDialog open={alertArchiveOpen} onOpenChange={setAlertArchiveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/*DELETE ALERT*/}
+      <AlertDialog open={alertDeleteOpen} onOpenChange={setAlertDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 
