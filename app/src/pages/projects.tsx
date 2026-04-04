@@ -1,11 +1,28 @@
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
-import { Separator } from "@/components/ui/separator";
-import { Link } from "react-router";
-import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item"
+import { Separator } from "@/components/ui/separator"
+import { Link } from "react-router"
+import { useState } from "react"
+import { Switch } from "@/components/ui/switch"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,14 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  Archive,
-  Ellipsis,
-  Hash,
-  Plus,
-  Search,
-  Trash
-} from 'lucide-react';
+import { Archive, Ellipsis, Hash, Plus, Search, Trash } from "lucide-react"
 import {
   Pagination,
   PaginationContent,
@@ -38,51 +48,61 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Field, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
-import { getProjects, PROJECTS_KEY, type GetProjectsParams } from "@/api/resources";
-import { LoadingPage } from "@/components/loading-page";
-import { ErrorPage } from "@/components/error-page";
-import { AppError } from "@/lib/app-error";
-
+import { Field, FieldGroup } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useQuery } from "@tanstack/react-query"
+import {
+  getProjects,
+  PROJECTS_KEY,
+  type GetProjectsParams,
+} from "@/api/resources"
+import { LoadingPage } from "@/components/loading-page"
+import { ErrorPage } from "@/components/error-page"
+import { AppError } from "@/lib/app-error"
 
 export default function Projects() {
-  const [alertArchiveOpen, setAlertArchiveOpen] = useState(false);
-  const [alertDeleteOpen, setAlertDeleteOpen] = useState(false);
+  const [alertArchiveOpen, setAlertArchiveOpen] = useState(false)
+  const [alertDeleteOpen, setAlertDeleteOpen] = useState(false)
 
   const queryOpt: GetProjectsParams = {
-    search: undefined
+    search: undefined,
   }
   const { data, isPending, isError, error } = useQuery({
     queryKey: [PROJECTS_KEY, queryOpt],
-    queryFn: () => getProjects(queryOpt)
+    queryFn: () => getProjects(queryOpt),
   })
-
 
   if (isPending) {
     return (
-      <div className="h-screen flex flex-col justify-center ">
+      <div className="flex h-screen flex-col justify-center">
         <LoadingPage title="Loading projects..." />
       </div>
     )
   }
 
   if (isError) {
-    const appError = error instanceof AppError ? error : new AppError({ status: 500, message: "Something when wrong" });
+    const appError =
+      error instanceof AppError
+        ? error
+        : new AppError({ status: 500, message: "Something when wrong" })
+
     return (
-      <div className="h-screen flex flex-col justify-center">
-        <ErrorPage status={appError.status} message={appError.message} description={appError?.description} />
+      <div className="flex h-screen flex-col justify-center">
+        <ErrorPage
+          status={appError.status}
+          message={appError.message}
+          description={appError?.description}
+        />
       </div>
-    );
+    )
   }
 
   return (
     <>
       <div>
-        <div className="my-4 mx-24">
-          <div className="flex flex-col space-y-4 justify-between">
+        <div className="mx-24 my-4">
+          <div className="flex flex-col justify-between space-y-4">
             <h2 className="text-2xl font-semibold">My Projects</h2>
             <div className="space-y-4">
               <div>
@@ -93,7 +113,7 @@ export default function Projects() {
                   </InputGroupAddon>
                 </InputGroup>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-x-4">
                   <span className="text-muted-foreground">Archive only</span>
                   <Switch className={"cursor-pointer"} />
@@ -101,7 +121,7 @@ export default function Projects() {
                 <Dialog>
                   <form>
                     <DialogTrigger>
-                      <div className="flex items-center gap-x-2 bg-primary text-primary-foreground p-1 rounded-md cursor-pointer">
+                      <div className="flex cursor-pointer items-center gap-x-2 rounded-md bg-primary p-1 text-primary-foreground">
                         <Plus />
                       </div>
                     </DialogTrigger>
@@ -112,11 +132,17 @@ export default function Projects() {
                       <FieldGroup>
                         <Field>
                           <Label htmlFor="name-1">Name</Label>
-                          <Input id="name-1" name="name" defaultValue="Learn Go" />
+                          <Input
+                            id="name-1"
+                            name="name"
+                            defaultValue="Learn Go"
+                          />
                         </Field>
                       </FieldGroup>
                       <DialogFooter>
-                        <DialogClose render={<Button variant="outline">Cancel</Button>} />
+                        <DialogClose
+                          render={<Button variant="outline">Cancel</Button>}
+                        />
                         <Button type="submit">Save changes</Button>
                       </DialogFooter>
                     </DialogContent>
@@ -125,7 +151,11 @@ export default function Projects() {
               </div>
             </div>
             <div>
-              <h4>{data.pagination !== null ? `${data.pagination.total_items_in_page} projects` : "0 project"}</h4>
+              <h4>
+                {data.pagination !== null
+                  ? `${data.pagination.total_items_in_page} projects`
+                  : "0 project"}
+              </h4>
               <Separator />
               {data.projects.length !== 0 && data.pagination !== null && (
                 <>
@@ -143,14 +173,29 @@ export default function Projects() {
                           </ItemContent>
                           <ItemActions>
                             <DropdownMenu>
-                              <DropdownMenuTrigger render={<Button variant={"ghost"} className={"cursor-pointer"}><Ellipsis /></Button>} />
+                              <DropdownMenuTrigger
+                                render={
+                                  <Button
+                                    variant={"ghost"}
+                                    className={"cursor-pointer"}
+                                  >
+                                    <Ellipsis />
+                                  </Button>
+                                }
+                              />
                               <DropdownMenuContent>
                                 <DropdownMenuGroup>
-                                  <DropdownMenuItem className={"cursor-pointer"} onClick={() => setAlertArchiveOpen(true)}>
+                                  <DropdownMenuItem
+                                    className={"cursor-pointer"}
+                                    onClick={() => setAlertArchiveOpen(true)}
+                                  >
                                     <Archive />
                                     Archive
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => setAlertDeleteOpen(true)}>
+                                  <DropdownMenuItem
+                                    className="cursor-pointer text-red-500"
+                                    onClick={() => setAlertDeleteOpen(true)}
+                                  >
                                     <Trash />
                                     Delete
                                   </DropdownMenuItem>
@@ -165,21 +210,29 @@ export default function Projects() {
                   <div className="self-end">
                     <Pagination>
                       <PaginationContent>
-                        {Array.from({ length: data.pagination.total_pages }, (_, i) => (
-                          <PaginationItem key={i}>
-                            <PaginationLink href={`?page=${i + 1}`}>
-                              {i + 1}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ))}
+                        {Array.from(
+                          { length: data.pagination.total_pages },
+                          (_, i) => (
+                            <PaginationItem key={i}>
+                              <PaginationLink href={`?page=${i + 1}`}>
+                                {i + 1}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        )}
                       </PaginationContent>
                     </Pagination>
                   </div>
                   {/*ARCHIVE ALERT*/}
-                  <AlertDialog open={alertArchiveOpen} onOpenChange={setAlertArchiveOpen}>
+                  <AlertDialog
+                    open={alertArchiveOpen}
+                    onOpenChange={setAlertArchiveOpen}
+                  >
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -189,10 +242,15 @@ export default function Projects() {
                   </AlertDialog>
 
                   {/*DELETE ALERT*/}
-                  <AlertDialog open={alertDeleteOpen} onOpenChange={setAlertDeleteOpen}>
+                  <AlertDialog
+                    open={alertDeleteOpen}
+                    onOpenChange={setAlertDeleteOpen}
+                  >
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>

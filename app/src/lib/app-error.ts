@@ -19,7 +19,4 @@ class AppError extends Error {
   }
 }
 
-export {
-  AppError,
-  type AppErrorParams
-}
+export { AppError, type AppErrorParams }

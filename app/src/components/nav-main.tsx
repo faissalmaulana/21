@@ -23,10 +23,10 @@ export function NavMain({
               to={item.url}
               key={item.title}
               className={({ isActive }) =>
-                `rounded-md px-3 py-1.5
-                ${isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 "
+                `rounded-md px-3 py-1.5 ${
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2"
                 }`
               }
             >

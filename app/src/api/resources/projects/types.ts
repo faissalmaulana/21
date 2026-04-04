@@ -7,7 +7,4 @@ interface GetProjectsParams {
   search?: string
 }
 
-export type {
-  Project,
-  GetProjectsParams
-}
+export type { Project, GetProjectsParams }
