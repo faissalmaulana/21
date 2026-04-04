@@ -18,7 +18,6 @@ import {
 import {
   Archive,
   Ellipsis,
-  FolderDot,
   Hash,
   Plus,
   Search,
@@ -45,14 +44,6 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { getProjects, PROJECTS_KEY } from "@/api/resources";
 
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty"
 
 
 export default function Projects() {
@@ -73,13 +64,6 @@ export default function Projects() {
     return <span>Error: {error.message}</span>
   }
 
-  if (data.projects.length === 0 || data.pagination === null) {
-    return (
-      <div>
-        <EmptyProjects />
-      </div>
-    )
-  }
 
   return (
     <>
@@ -101,66 +85,85 @@ export default function Projects() {
                   <span className="text-muted-foreground">Archive only</span>
                   <Switch className={"cursor-pointer"} />
                 </div>
-                <CreateNewProjectForm>
-                  <div className="flex items-center gap-x-2 bg-primary text-primary-foreground p-1 rounded-md cursor-pointer">
-                    <Plus />
-                  </div>
-                </CreateNewProjectForm>
+                <Dialog>
+                  <form>
+                    <DialogTrigger>
+                      <div className="flex items-center gap-x-2 bg-primary text-primary-foreground p-1 rounded-md cursor-pointer">
+                        <Plus />
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle>Add project</DialogTitle>
+                      </DialogHeader>
+                      <FieldGroup>
+                        <Field>
+                          <Label htmlFor="name-1">Name</Label>
+                          <Input id="name-1" name="name" defaultValue="Learn Go" />
+                        </Field>
+                      </FieldGroup>
+                      <DialogFooter>
+                        <DialogClose render={<Button variant="outline">Cancel</Button>} />
+                        <Button type="submit">Save changes</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </form>
+                </Dialog>
               </div>
             </div>
-
             <div>
-              <h4>{data.pagination.total_items_in_page} projects</h4>
+              <h4>{data.pagination !== null ? `${data.pagination.total_items_in_page} projects` : "0 project"}</h4>
               <Separator />
-              <div className="my-3">
-                <ItemGroup>
-                  {data.projects.map((project) => (
-                    <Item key={project.id}>
-                      <ItemMedia variant="icon">
-                        <Hash />
-                      </ItemMedia>
-                      <ItemContent>
-                        <Link to={project.id}>
-                          <ItemTitle>{project.name}</ItemTitle>
-                        </Link>
-                      </ItemContent>
-
-                      <ItemActions>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button variant={"ghost"} className={"cursor-pointer"}><Ellipsis /></Button>} />
-                          <DropdownMenuContent>
-                            <DropdownMenuGroup>
-                              <DropdownMenuItem className={"cursor-pointer"} onClick={() => setAlertArchiveOpen(true)}>
-                                <Archive />
-                                Archive
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => setAlertDeleteOpen(true)}>
-                                <Trash />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </ItemActions>
-                    </Item>
-                  ))}
-                </ItemGroup>
-              </div>
-
-              <div className="self-end">
-                <Pagination>
-                  <PaginationContent>
-                    {Array.from({ length: data.pagination.total_pages }, (_, i) => (
-                      <PaginationItem key={i}>
-                        <PaginationLink href={`?page=${i + 1}`}>
-                          {i + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                  </PaginationContent>
-                </Pagination>
-              </div>
+              {data.projects.length !== 0 && data.pagination !== null && (
+                <>
+                  <div className="my-3">
+                    <ItemGroup>
+                      {data.projects.map((project) => (
+                        <Item key={project.id}>
+                          <ItemMedia variant="icon">
+                            <Hash />
+                          </ItemMedia>
+                          <ItemContent>
+                            <Link to={project.id}>
+                              <ItemTitle>{project.name}</ItemTitle>
+                            </Link>
+                          </ItemContent>
+                          <ItemActions>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger render={<Button variant={"ghost"} className={"cursor-pointer"}><Ellipsis /></Button>} />
+                              <DropdownMenuContent>
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem className={"cursor-pointer"} onClick={() => setAlertArchiveOpen(true)}>
+                                    <Archive />
+                                    Archive
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => setAlertDeleteOpen(true)}>
+                                    <Trash />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </ItemActions>
+                        </Item>
+                      ))}
+                    </ItemGroup>
+                  </div>
+                  <div className="self-end">
+                    <Pagination>
+                      <PaginationContent>
+                        {Array.from({ length: data.pagination.total_pages }, (_, i) => (
+                          <PaginationItem key={i}>
+                            <PaginationLink href={`?page=${i + 1}`}>
+                              {i + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -191,62 +194,5 @@ export default function Projects() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
-}
-
-
-
-export function EmptyProjects() {
-  return (
-    <Empty>
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <FolderDot />
-        </EmptyMedia>
-        <EmptyTitle>No Projects Yet</EmptyTitle>
-        <EmptyDescription>
-          You haven&apos;t created any projects yet. Get started by creating
-          your first project.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent className="flex-row justify-center gap-2">
-        <CreateNewProjectForm>
-          <div className="flex items-center gap-x-2 bg-primary text-primary-foreground p-2 rounded-md cursor-pointer">Create Project</div>
-        </CreateNewProjectForm>
-      </EmptyContent>
-    </Empty>
-  )
-}
-
-interface CreateNewProjectFormProps {
-  // this is for trigger dialog,
-  // it should be not button
-  children: React.ReactElement
-}
-
-export function CreateNewProjectForm(prop: CreateNewProjectFormProps) {
-  return (
-    <Dialog>
-      <form>
-        <DialogTrigger>
-          {prop.children}
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Add project</DialogTitle>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <Label htmlFor="name-1">Name</Label>
-              <Input id="name-1" name="name" defaultValue="Learn Go" />
-            </Field>
-          </FieldGroup>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline">Cancel</Button>} />
-            <Button type="submit">Save changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </form>
-    </Dialog>
   )
 }
