@@ -3,7 +3,9 @@ module github.com/faissalmaulana/21/api
 go 1.25.0
 
 require (
+	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v5 v5.1.0
+	github.com/lib/pq v1.12.3
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.26.0
