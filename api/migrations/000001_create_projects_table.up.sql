@@ -1,0 +1,5 @@
+CREATE TABLE projects(
+id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+name VARCHAR NOT NULL,
+created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
