@@ -65,6 +65,8 @@ func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Proje
 		return nil, MapDBError(err)
 	}
 
+	defer rows.Close()
+
 	var projects = make([]model.Project, 0)
 
 	for rows.Next() {
