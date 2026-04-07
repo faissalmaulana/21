@@ -1,4 +1,4 @@
-package service_test
+package repository_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/faissalmaulana/21/api/internal/model"
-	"github.com/faissalmaulana/21/api/internal/service"
+	"github.com/faissalmaulana/21/api/internal/repository"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -23,7 +23,7 @@ func TestProject(t *testing.T) {
 	})
 
 	t.Run("AddProject", func(t *testing.T) {
-		project := service.New(testDB, zap.NewNop())
+		project := repository.New(testDB, zap.NewNop())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()

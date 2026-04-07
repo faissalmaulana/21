@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type ProjectProvider interface {
+type ProjectRepository interface {
 	AddProject(ctx context.Context, prj model.Project) error
 }
 
