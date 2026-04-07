@@ -9,16 +9,22 @@ import (
 	"go.uber.org/zap"
 )
 
+type Querier interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
+
 type ProjectProvider interface {
 	AddProject(ctx context.Context, prj model.Project) error
 }
 
 type Project struct {
-	db  *sql.DB
+	db  Querier
 	log *zap.Logger
 }
 
-func New(db *sql.DB, log *zap.Logger) *Project {
+func New(db Querier, log *zap.Logger) *Project {
 	return &Project{
 		db:  db,
 		log: log,
