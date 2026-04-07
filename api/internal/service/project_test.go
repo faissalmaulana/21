@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func NewDBForTest(t *testing.T) *sql.DB {
@@ -34,7 +35,7 @@ func NewDBForTest(t *testing.T) *sql.DB {
 func TestAddProject(t *testing.T) {
 
 	db := NewDBForTest(t)
-	project := service.New(db)
+	project := service.New(db, zap.NewExample())
 
 	ctx := context.Background()
 	prj := model.Project{

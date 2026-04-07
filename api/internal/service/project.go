@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	constant "github.com/faissalmaulana/21/api/internal/const"
 	"github.com/faissalmaulana/21/api/internal/model"
+	"go.uber.org/zap"
 )
 
 type ProjectProvider interface {
@@ -14,11 +14,15 @@ type ProjectProvider interface {
 }
 
 type Project struct {
-	db *sql.DB
+	db  *sql.DB
+	log *zap.Logger
 }
 
-func New(db *sql.DB) *Project {
-	return &Project{db: db}
+func New(db *sql.DB, log *zap.Logger) *Project {
+	return &Project{
+		db:  db,
+		log: log,
+	}
 }
 
 func (p *Project) AddProject(ctx context.Context, prj model.Project) error {
@@ -28,7 +32,8 @@ func (p *Project) AddProject(ctx context.Context, prj model.Project) error {
 
 	_, err := p.db.ExecContext(ctx, "INSERT INTO projects(name) VALUES($1)", prj.Name)
 	if err != nil {
-		return fmt.Errorf("AddProject: %v", err)
+		p.log.Error("Error AddProject", zap.Error(err))
+		return MapDBError(err)
 	}
 
 	return nil
