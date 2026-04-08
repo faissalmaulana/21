@@ -23,7 +23,7 @@ type Project struct {
 	log *zap.Logger
 }
 
-func New(db *sql.DB, log *zap.Logger) *Project {
+func NewProject(db *sql.DB, log *zap.Logger) *Project {
 	return &Project{
 		db:  db,
 		log: log,

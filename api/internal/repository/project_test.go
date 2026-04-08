@@ -27,7 +27,7 @@ func TestProject(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		project := repository.New(testDB, zap.NewNop())
+		project := repository.NewProject(testDB, zap.NewNop())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
@@ -42,7 +42,7 @@ func TestProject(t *testing.T) {
 	})
 
 	t.Run("GetProjects", func(t *testing.T) {
-		repo := repository.New(testDB, zap.NewExample())
+		repo := repository.NewProject(testDB, zap.NewExample())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
@@ -190,7 +190,7 @@ func TestProject(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		project := repository.New(testDB, zap.NewNop())
+		project := repository.NewProject(testDB, zap.NewNop())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
@@ -243,7 +243,7 @@ func TestProject(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		project := repository.New(testDB, zap.NewNop())
+		project := repository.NewProject(testDB, zap.NewNop())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
@@ -297,7 +297,7 @@ func TestProject(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		project := repository.New(testDB, zap.NewExample())
+		project := repository.NewProject(testDB, zap.NewExample())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()

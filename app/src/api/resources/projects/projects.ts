@@ -8,7 +8,7 @@ async function getProjects(
   opt: GetProjectsParams
 ): Promise<{ projects: Project[]; pagination: Pagination | null }> {
   // in production (window.location.origin) should be changed to host of the server
-  const url = new URL('/dummies/projects.json', window.location.origin)
+  const url = new URL('http://localhost:8080/api/projects/', window.location.origin)
 
   // build query params
   if (opt.search) {
