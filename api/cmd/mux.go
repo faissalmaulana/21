@@ -12,14 +12,21 @@ import (
 type EchoMuxParams struct {
 	fx.In
 
-	PingHandler handler.Handle `name:"pingHandler"`
+	PingHandler        handler.Handle `name:"pingHandler"`
+	GetProjectsHandler handler.Handle `name:"getProjectsHandler"`
 }
 
 func NewEchoMux(p EchoMuxParams) http.Handler {
 	e := echo.New()
 	e.Use(middleware.RequestLogger())
+	e.Use(middleware.CORS("http://localhost:5173"))
 
-	e.GET("/ping", p.PingHandler.HandleFunc)
+	api := e.Group("/api")
+
+	api.GET("/ping", p.PingHandler.HandleFunc)
+
+	projects := api.Group("/projects")
+	projects.GET("/", p.GetProjectsHandler.HandleFunc)
 
 	return e
 }

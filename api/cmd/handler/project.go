@@ -36,7 +36,7 @@ type ProjectResponse struct {
 
 type GetProjectsResponse struct {
 	Projects []ProjectResponse `json:"projects"`
-	Paginate model.Pagination
+	Paginate model.Pagination  `json:"paginate"`
 }
 
 func (p *GetProjectsHandler) HandleFunc(c *echo.Context) error {
