@@ -189,8 +189,8 @@ export default function Projects() {
             </div>
             <div>
               <h4>
-                {data.pagination !== null
-                  ? `${data.pagination.total_items_in_page} projects`
+                {data.pagination
+                  ? `${data.pagination?.total_items_in_page} projects`
                   : "0 project"}
               </h4>
               <Separator />
