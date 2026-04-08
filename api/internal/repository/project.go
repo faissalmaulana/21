@@ -11,7 +11,7 @@ import (
 )
 
 type ProjectRepository interface {
-	AddProject(ctx context.Context, prj model.Project) error
+	AddProject(ctx context.Context, prj model.Project) (string, error)
 }
 
 type Project struct {
@@ -26,7 +26,7 @@ func New(db *sql.DB, log *zap.Logger) *Project {
 	}
 }
 
-func (p *Project) AddProject(ctx context.Context, prj model.Project) error {
+func (p *Project) AddProject(ctx context.Context, prj model.Project) (string, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
 	defer cancel()
@@ -39,13 +39,15 @@ func (p *Project) AddProject(ctx context.Context, prj model.Project) error {
 		isArchive = true
 	}
 
-	_, err := p.db.ExecContext(ctx, "INSERT INTO projects(name,is_archive) VALUES($1,$2)", prj.Name, isArchive)
+	var newProjectID string
+
+	err := p.db.QueryRowContext(ctx, "INSERT INTO projects(name,is_archive) VALUES($1,$2) RETURNING id", prj.Name, isArchive).Scan(&newProjectID)
 	if err != nil {
 		p.log.Error("Error AddProject", zap.Error(err))
-		return MapDBError(err)
+		return "", MapDBError(err)
 	}
 
-	return nil
+	return newProjectID, nil
 }
 
 type ProjectsParam struct {
@@ -119,4 +121,17 @@ func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Proje
 	}
 
 	return projects, paginate, nil
+}
+
+func (p *Project) DeleteProjectByID(ctx context.Context, id string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
+	defer cancel()
+
+	var deletedProjectID string
+	if err := p.db.QueryRowContext(ctx, `DELETE FROM projects WHERE id = $1 RETURNING id`, id).Scan(&deletedProjectID); err != nil {
+		p.log.Error("Error delete project", zap.Error(err))
+		return "", MapDBError(err)
+	}
+
+	return id, nil
 }

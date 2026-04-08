@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -13,9 +14,14 @@ var (
 	ErrForeignKey       = errors.New("foreign key violation")
 	ErrNotNull          = errors.New("not null violation")
 	ErrConnectionFailed = errors.New("database connection failed")
+	ErrNotFound         = errors.New("record not found")
 )
 
 func MapDBError(err error) error {
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("database operation failed: %w", ErrNotFound)
+	}
+
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) {
 		switch pqErr.Code {

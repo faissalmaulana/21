@@ -10,6 +10,7 @@ import (
 	"github.com/faissalmaulana/21/api/internal/repository"
 	"github.com/faissalmaulana/21/api/internal/utils"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -35,8 +36,9 @@ func TestProject(t *testing.T) {
 			Name: "Test Project",
 		}
 
-		err := project.AddProject(ctx, prj)
+		projectID, err := project.AddProject(ctx, prj)
 		require.NoError(t, err)
+		require.NotEmpty(t, projectID)
 	})
 
 	t.Run("GetProjects", func(t *testing.T) {
@@ -159,7 +161,7 @@ func TestProject(t *testing.T) {
 				require.NoError(t, err)
 
 				for _, p := range tc.seedProjects {
-					err := repo.AddProject(ctx, p)
+					_, err := repo.AddProject(ctx, p)
 					require.NoError(t, err)
 				}
 
@@ -178,6 +180,58 @@ func TestProject(t *testing.T) {
 
 	})
 
+	t.Run("Delete Project by ID", func(t *testing.T) {
+		t.Cleanup(func() {
+			_, err := testDB.Exec(`
+            TRUNCATE TABLE
+                projects
+            RESTART IDENTITY CASCADE
+        `)
+			require.NoError(t, err)
+		})
+
+		project := repository.New(testDB, zap.NewNop())
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		projectID, err := project.AddProject(ctx, model.Project{Name: "Daily Routine"})
+		require.NoError(t, err)
+
+		testCases := []struct {
+			name      string
+			projectID string
+			wantID    string
+			wantErr   bool
+		}{
+			{
+				name:      "success - delete project",
+				projectID: projectID,
+				wantID:    projectID,
+				wantErr:   false,
+			},
+			{
+				name:      "fail - project already deleted (not found)",
+				projectID: projectID,
+				wantID:    "",
+				wantErr:   true,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				deletedID, err := project.DeleteProjectByID(ctx, tc.projectID)
+
+				if tc.wantErr {
+					assert.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tc.wantID, deletedID)
+			})
+		}
+	})
 }
 
 func seedProjects() []model.Project {
