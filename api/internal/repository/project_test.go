@@ -286,6 +286,81 @@ func TestProject(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("Update Project", func(t *testing.T) {
+		t.Cleanup(func() {
+			_, err := testDB.Exec(`
+            TRUNCATE TABLE
+                projects
+            RESTART IDENTITY CASCADE
+        `)
+			require.NoError(t, err)
+		})
+
+		project := repository.New(testDB, zap.NewExample())
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		projectID, err := project.AddProject(ctx, model.Project{Name: "Daily Routine"})
+		require.NoError(t, err)
+
+		testCases := []struct {
+			name    string
+			input   model.Project
+			wantErr bool
+		}{
+			{
+				name: "success - update name",
+				input: model.Project{
+					ID:        projectID,
+					Name:      "Updated Routine",
+					IsArchive: utils.BoolPtr(false),
+				},
+				wantErr: false,
+			},
+			{
+				name: "success - update name and archive",
+				input: model.Project{
+					ID:        projectID,
+					Name:      "Archived Routine",
+					IsArchive: utils.BoolPtr(true),
+				},
+				wantErr: false,
+			},
+			{
+				name: "fail - project not found",
+				input: model.Project{
+					ID:        "00000000-0000-0000-0000-000000000000",
+					Name:      "Ghost Project",
+					IsArchive: utils.BoolPtr(false),
+				},
+				wantErr: true,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				err = project.UpdateProject(ctx, tc.input)
+				if tc.wantErr {
+					assert.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
+
+				result, err := project.GetProjectByID(ctx, tc.input.ID)
+				require.NoError(t, err)
+
+				assert.Equal(t, tc.input.Name, result.Name)
+				assert.Equal(t, tc.input.IsArchive, result.IsArchive)
+
+				// ID and created_at must never change
+				assert.Equal(t, tc.input.ID, result.ID)
+				assert.NotNil(t, result.CreatedAt)
+			})
+		}
+	})
 }
 
 func seedProjects() []model.Project {

@@ -154,3 +154,22 @@ func (p *Project) DeleteProjectByID(ctx context.Context, id string) (string, err
 
 	return id, nil
 }
+
+func (p *Project) UpdateProject(ctx context.Context, project model.Project) error {
+	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
+	defer cancel()
+
+	foundProject, err := p.GetProjectByID(ctx, project.ID)
+	if err != nil {
+		p.log.Error("Error get project", zap.Error(err))
+		return MapDBError(err)
+	}
+
+	_, err = p.db.ExecContext(ctx, "UPDATE projects SET name = $1, is_archive = $2 WHERE id = $3", project.Name, *project.IsArchive, foundProject.ID)
+	if err != nil {
+		p.log.Error("Error update project", zap.Error(err))
+		return MapDBError(err)
+	}
+
+	return nil
+}
