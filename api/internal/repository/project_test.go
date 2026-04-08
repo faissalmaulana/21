@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	constant "github.com/faissalmaulana/21/api/internal/const"
 	"github.com/faissalmaulana/21/api/internal/model"
 	"github.com/faissalmaulana/21/api/internal/repository"
 	"github.com/faissalmaulana/21/api/internal/utils"
@@ -45,13 +46,14 @@ func TestProject(t *testing.T) {
 		defer cancel()
 
 		testCases := []struct {
-			name          string
-			seedProjects  []model.Project
-			expectedNames []string
-			queryParams   repository.ProjectsParam
+			name             string
+			seedProjects     []model.Project
+			expectedNames    []string
+			expectedPaginate model.Pagination
+			queryParams      repository.ProjectsParam
 		}{
 			{
-				name:         "returns all projects",
+				name:         "returns all projects (exclude archive)",
 				seedProjects: seedProjects(),
 				expectedNames: []string{
 					"Work Tasks",
@@ -62,14 +64,33 @@ func TestProject(t *testing.T) {
 					"Study Tasks",
 					"Home Chores",
 				},
-				queryParams: repository.ProjectsParam{},
+				expectedPaginate: model.Pagination{
+					Page:             1,
+					Size:             10,
+					TotalItemsInPage: 7,
+					TotalItems:       10,
+					TotalPages:       1,
+				},
+				queryParams: repository.ProjectsParam{
+					Page: 1,
+					Size: constant.PaginateSize,
+				},
 			},
 			{
 				name:          "returns found projects",
 				seedProjects:  seedProjects(),
 				expectedNames: []string{"Fitness Goals"},
+				expectedPaginate: model.Pagination{
+					Page:             1,
+					Size:             10,
+					TotalItemsInPage: 1,
+					TotalItems:       10,
+					TotalPages:       1,
+				},
 				queryParams: repository.ProjectsParam{
 					Search: "Goals",
+					Page:   1,
+					Size:   constant.PaginateSize,
 				},
 			},
 			{
@@ -80,8 +101,17 @@ func TestProject(t *testing.T) {
 					"Errands",
 					"Gym Goals",
 				},
+				expectedPaginate: model.Pagination{
+					Page:             1,
+					Size:             10,
+					TotalItemsInPage: 3,
+					TotalItems:       10,
+					TotalPages:       1,
+				},
 				queryParams: repository.ProjectsParam{
 					IsArchive: true,
+					Page:      1,
+					Size:      constant.PaginateSize,
 				},
 			},
 			{
@@ -90,17 +120,35 @@ func TestProject(t *testing.T) {
 				expectedNames: []string{
 					"Errands",
 				},
+				expectedPaginate: model.Pagination{
+					Page:             1,
+					Size:             10,
+					TotalItemsInPage: 1,
+					TotalItems:       10,
+					TotalPages:       1,
+				},
 				queryParams: repository.ProjectsParam{
 					Search:    "errands",
 					IsArchive: true,
+					Page:      1,
+					Size:      constant.PaginateSize,
 				},
 			},
 			{
 				name:          "returns empty projects (not found)",
 				seedProjects:  seedProjects(),
 				expectedNames: []string{},
+				expectedPaginate: model.Pagination{
+					Page:             1,
+					Size:             10,
+					TotalItemsInPage: 0,
+					TotalItems:       10,
+					TotalPages:       1,
+				},
 				queryParams: repository.ProjectsParam{
 					Search: "lizzy",
+					Page:   1,
+					Size:   constant.PaginateSize,
 				},
 			},
 		}
@@ -115,7 +163,7 @@ func TestProject(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				projects, err := repo.Projects(ctx, tc.queryParams)
+				projects, paginate, err := repo.Projects(ctx, tc.queryParams)
 				require.NoError(t, err)
 
 				var projectNames []string
@@ -124,6 +172,7 @@ func TestProject(t *testing.T) {
 				}
 
 				require.ElementsMatch(t, tc.expectedNames, projectNames)
+				require.Equal(t, tc.expectedPaginate, paginate)
 			})
 		}
 

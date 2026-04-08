@@ -51,33 +51,72 @@ func (p *Project) AddProject(ctx context.Context, prj model.Project) error {
 type ProjectsParam struct {
 	Search    string
 	IsArchive bool
+	Page      int
+	Size      int
 }
 
-func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Project, error) {
+func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Project, model.Pagination, error) {
 	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
 	defer cancel()
 
-	query := "SELECT id,name FROM projects WHERE name ILIKE '%'|| $1 ||'%' AND is_archive = $2 ORDER BY created_at DESC"
+	var offset int
 
-	rows, err := p.db.QueryContext(ctx, query, pp.Search, pp.IsArchive)
-	if err != nil {
-		p.log.Error("Error query projects", zap.Error(err))
-		return nil, MapDBError(err)
+	if pp.Page <= 1 {
+		offset = 0
+	} else {
+		offset = pp.Page * pp.Size
 	}
 
+	query := `
+        SELECT id, name
+        FROM projects
+        WHERE name ILIKE '%' || $1 || '%'
+          AND is_archive = $2
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4`
+
+	rows, err := p.db.QueryContext(ctx, query, pp.Search, pp.IsArchive, pp.Size, offset)
+	if err != nil {
+		p.log.Error("Error query projects", zap.Error(err))
+		return nil, model.Pagination{}, MapDBError(err)
+	}
 	defer rows.Close()
 
-	var projects = make([]model.Project, 0)
+	projects := make([]model.Project, 0)
 
 	for rows.Next() {
 		project := new(model.Project)
 		if err := rows.Scan(&project.ID, &project.Name); err != nil {
 			p.log.Error("Error scan project", zap.Error(err))
-			return nil, MapDBError(err)
+			return nil, model.Pagination{}, MapDBError(err)
 		}
-
 		projects = append(projects, *project)
 	}
 
-	return projects, nil
+	if err := rows.Err(); err != nil {
+		return nil, model.Pagination{}, MapDBError(err)
+	}
+
+	var totalItems int64
+
+	err = p.db.QueryRowContext(ctx, `SELECT COUNT(id) FROM projects`).Scan(&totalItems)
+	if err != nil {
+		p.log.Error("Error counting projects", zap.Error(err))
+		return nil, model.Pagination{}, MapDBError(err)
+	}
+
+	var totalPages int
+	if pp.Size > 0 {
+		totalPages = int((totalItems + int64(pp.Size) - 1) / int64(pp.Size))
+	}
+
+	paginate := model.Pagination{
+		Page:             pp.Page,
+		Size:             pp.Size,
+		TotalItemsInPage: len(projects),
+		TotalItems:       int(totalItems),
+		TotalPages:       totalPages,
+	}
+
+	return projects, paginate, nil
 }

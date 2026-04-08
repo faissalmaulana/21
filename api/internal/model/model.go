@@ -9,3 +9,11 @@ type Project struct {
 	IsArchive *bool
 	CreatedAt *time.Time
 }
+
+type Pagination struct {
+	Page             int `json:"page"`
+	Size             int `json:"size"`
+	TotalItemsInPage int `json:"total_items_in_page"`
+	TotalItems       int `json:"total_items"`
+	TotalPages       int `json:"total_pages"`
+}
