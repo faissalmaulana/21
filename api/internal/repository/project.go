@@ -123,6 +123,25 @@ func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Proje
 	return projects, paginate, nil
 }
 
+func (p *Project) GetProjectByID(ctx context.Context, id string) (model.Project, error) {
+	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
+	defer cancel()
+
+	var project model.Project
+
+	if err := p.db.QueryRowContext(ctx, `SELECT id,name,is_archive,created_at FROM projects WHERE id = $1`, id).Scan(
+		&project.ID,
+		&project.Name,
+		&project.IsArchive,
+		&project.CreatedAt,
+	); err != nil {
+		p.log.Error("Error get project", zap.Error(err))
+		return model.Project{}, MapDBError(err)
+	}
+
+	return project, nil
+}
+
 func (p *Project) DeleteProjectByID(ctx context.Context, id string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
 	defer cancel()
