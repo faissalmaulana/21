@@ -12,6 +12,10 @@ import (
 
 type ProjectRepository interface {
 	AddProject(ctx context.Context, prj model.Project) (string, error)
+	Projects(ctx context.Context, pp ProjectsParam) ([]model.Project, model.Pagination, error)
+	GetProjectByID(ctx context.Context, id string) (model.Project, error)
+	DeleteProjectByID(ctx context.Context, id string) (string, error)
+	UpdateProject(ctx context.Context, project model.Project) error
 }
 
 type Project struct {
