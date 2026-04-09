@@ -229,6 +229,7 @@ export default function Projects() {
                           <Input
                             className={createProjectMutation.isError ? "mt-0" : "mt-4"}
                             name="name"
+                            autoFocus
                             value={projectName}
                             onChange={(e) => {
                               setProjectName(e.target.value)
