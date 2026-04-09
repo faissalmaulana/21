@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/item"
 import { Separator } from "@/components/ui/separator"
 import { Link, useSearchParams } from "react-router"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type SubmitEvent } from "react"
 import { Switch } from "@/components/ui/switch"
 import {
   AlertDialog,
@@ -50,10 +50,10 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   getProjects,
+  postProject,
   PROJECTS_KEY,
   type GetProjectsParams,
 } from "@/api/resources"
@@ -70,6 +70,20 @@ export default function Projects() {
   const [withArchive, setWithArchive] = useState<boolean>(
     () => uRLSearchParams.get("archive") === "true"
   )
+
+
+  const queryClient = useQueryClient()
+  const [projectName, setProjectName] = useState("")
+  const [openAddDialog, setOpenAddDialog] = useState(false)
+
+  const createProjectMutation = useMutation({
+    mutationFn: postProject,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] })
+      setProjectName("")
+      setOpenAddDialog(false)
+    },
+  })
 
   const debouncedSearch = useDebounce<string>(searchInput, 500)
 
@@ -89,6 +103,16 @@ export default function Projects() {
   const handleWithArchive = (checked: boolean) => {
     setWithArchive(checked)
   }
+
+  const handlePostProjectSubmit = (e: SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    createProjectMutation.mutate({
+      name: projectName,
+    })
+  }
+
+
 
   useEffect(() => {
     setURLSearchParams((prev) => {
@@ -155,24 +179,45 @@ export default function Projects() {
                   <span className="text-muted-foreground">Archive only</span>
                   <Switch className={"cursor-pointer"} checked={withArchive} onCheckedChange={handleWithArchive} />
                 </div>
-                <Dialog>
-                  <form>
-                    <DialogTrigger>
-                      <div className="flex cursor-pointer items-center gap-x-2 rounded-md bg-primary p-1 text-primary-foreground">
-                        <Plus />
-                      </div>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-sm">
+                <Dialog open={openAddDialog}
+                  onOpenChange={(next) => {
+                    if (createProjectMutation.isPending) return
+
+                    if (!next) {
+                      createProjectMutation.reset()
+                      setProjectName("")
+                    }
+
+                    setOpenAddDialog(next)
+                  }}
+                >
+                  <DialogTrigger>
+                    <div className="flex cursor-pointer items-center gap-x-2 rounded-md bg-primary p-1 text-primary-foreground">
+                      <Plus />
+                    </div>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-sm">
+                    <form onSubmit={handlePostProjectSubmit}>
                       <DialogHeader>
                         <DialogTitle>Add project</DialogTitle>
                       </DialogHeader>
-                      <FieldGroup>
+                      <FieldGroup className={createProjectMutation.isError ? "gap-2 mt-2" : "gap-5"}>
+                        {createProjectMutation.isError && (
+                          <p className="text-sm text-red-500">
+                            {(createProjectMutation.error as AppError).message}
+                          </p>
+                        )}
                         <Field>
-                          <Label htmlFor="name-1">Name</Label>
                           <Input
-                            id="name-1"
+                            className={createProjectMutation.isError ? "mt-0" : "mt-4"}
                             name="name"
-                            defaultValue="Learn Go"
+                            value={projectName}
+                            onChange={(e) => {
+                              setProjectName(e.target.value)
+                              if (createProjectMutation.isError) {
+                                createProjectMutation.reset()
+                              }
+                            }}
                           />
                         </Field>
                       </FieldGroup>
@@ -180,18 +225,21 @@ export default function Projects() {
                         <DialogClose
                           render={<Button variant="outline">Cancel</Button>}
                         />
-                        <Button type="submit">Save changes</Button>
+                        <Button
+                          type="submit"
+                          disabled={createProjectMutation.isPending}
+                        >
+                          {createProjectMutation.isPending ? "Saving..." : "Save changes"}
+                        </Button>
                       </DialogFooter>
-                    </DialogContent>
-                  </form>
+                    </form>
+                  </DialogContent>
                 </Dialog>
               </div>
             </div>
             <div>
               <h4>
-                {data.pagination
-                  ? `${data.pagination?.total_items_in_page} projects`
-                  : "0 project"}
+                {`${data.pagination?.total_items_in_page ?? 0} projects`}
               </h4>
               <Separator />
               {data.projects.length !== 0 && data.pagination !== null && (
@@ -248,7 +296,7 @@ export default function Projects() {
                     <Pagination>
                       <PaginationContent>
                         {Array.from(
-                          { length: data.pagination.total_pages },
+                          { length: data.pagination?.total_pages ?? 1 },
                           (_, i) => (
                             <PaginationItem key={i}>
                               <PaginationLink href={`?page=${i + 1}`}>

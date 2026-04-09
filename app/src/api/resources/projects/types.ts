@@ -8,4 +8,8 @@ interface GetProjectsParams {
   withArchive?: boolean
 }
 
-export type { Project, GetProjectsParams }
+interface PostProjectBodyParam {
+  name: string
+}
+
+export type { Project, GetProjectsParams, PostProjectBodyParam }
