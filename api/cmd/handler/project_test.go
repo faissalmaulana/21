@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,7 @@ import (
 	"github.com/faissalmaulana/21/api/internal/model"
 	"github.com/faissalmaulana/21/api/internal/repository"
 	"github.com/faissalmaulana/21/api/internal/service"
+	"github.com/faissalmaulana/21/api/internal/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
@@ -244,6 +246,192 @@ func TestDeleteProject(t *testing.T) {
 			})
 
 			err := deleteHandler.HandleFunc(c)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedStatus, rec.Code)
+			tt.assertBody(t, rec)
+
+			projectRepoMock.AssertExpectations(t)
+		})
+	}
+}
+
+func TestUpdateProject(t *testing.T) {
+	e := echo.New()
+
+	projectRepoMock := new(mock.ProjectRepositoryMock)
+	validate := validator.New()
+
+	updateHandler := handler.UpdateProjectHandler{
+		ProjectRepository:   projectRepoMock,
+		Validator:           validate,
+		ValidatorSugaredMsg: service.NewSugaredErrorMessageValidator(validate),
+	}
+
+	tests := []struct {
+		name           string
+		projectID      string
+		requestBody    string
+		setupMock      func()
+		expectedStatus int
+		assertBody     func(t *testing.T, rec *httptest.ResponseRecorder)
+	}{
+		{
+			name:      "success update name",
+			projectID: "123",
+			requestBody: `{
+				"name": "Updated Project"
+			}`,
+			setupMock: func() {
+				projectRepoMock.
+					On("GetProjectByID", testifyMock.Anything, "123").
+					Return(model.Project{ID: "123", Name: "Old"}, nil).
+					Once()
+
+				projectRepoMock.
+					On("UpdateProject", testifyMock.Anything, testifyMock.AnythingOfType("model.Project")).
+					Return(nil).
+					Once()
+			},
+			expectedStatus: http.StatusOK,
+			assertBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				expected := `{
+					"status":200,
+					"data":"Update Project Successfully",
+					"error":null
+				}`
+				assert.JSONEq(t, expected, rec.Body.String())
+			},
+		},
+		{
+			name:      "success update to be archived",
+			projectID: "123",
+			requestBody: `{
+				"to_be_archived": true
+			}`,
+			setupMock: func() {
+				projectRepoMock.
+					On("GetProjectByID", testifyMock.Anything, "123").
+					Return(model.Project{ID: "123", Name: "Project", IsArchive: utils.BoolPtr(false)}, nil).
+					Once()
+
+				projectRepoMock.
+					On("UpdateProject", testifyMock.Anything, testifyMock.AnythingOfType("model.Project")).
+					Return(nil).
+					Once()
+			},
+			expectedStatus: http.StatusOK,
+			assertBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				expected := `{
+					"status":200,
+					"data":"Update Project Successfully",
+					"error":null
+				}`
+				assert.JSONEq(t, expected, rec.Body.String())
+			},
+		},
+		{
+			name:        "no fields provided",
+			projectID:   "123",
+			requestBody: `{}`,
+			setupMock: func() {
+				projectRepoMock.
+					On("GetProjectByID", testifyMock.Anything, "123").
+					Return(model.Project{ID: "123"}, nil).
+					Once()
+			},
+			expectedStatus: http.StatusBadRequest,
+			assertBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				var resp handler.JSONResponse[any]
+				err := json.Unmarshal(rec.Body.Bytes(), &resp)
+				require.NoError(t, err)
+
+				assert.Equal(t, http.StatusBadRequest, resp.Status)
+				assert.Nil(t, resp.Data)
+				require.NotNil(t, resp.Error)
+				assert.Contains(t, resp.Error.Message, "No fields provided")
+			},
+		},
+		{
+			name:      "project not found",
+			projectID: "999",
+			requestBody: `{
+				"name": "Updated"
+			}`,
+			setupMock: func() {
+				projectRepoMock.
+					On("GetProjectByID", testifyMock.Anything, "999").
+					Return(model.Project{}, repository.ErrNotFound).
+					Once()
+			},
+			expectedStatus: http.StatusNotFound,
+			assertBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				var resp handler.JSONResponse[any]
+				err := json.Unmarshal(rec.Body.Bytes(), &resp)
+				require.NoError(t, err)
+
+				assert.Equal(t, http.StatusNotFound, resp.Status)
+				assert.Nil(t, resp.Data)
+				require.NotNil(t, resp.Error)
+			},
+		},
+		{
+			name:      "repository update error",
+			projectID: "123",
+			requestBody: `{
+				"name": "Updated"
+			}`,
+			setupMock: func() {
+				projectRepoMock.
+					On("GetProjectByID", testifyMock.Anything, "123").
+					Return(model.Project{ID: "123", Name: "Old"}, nil).
+					Once()
+
+				projectRepoMock.
+					On("UpdateProject", testifyMock.Anything, testifyMock.Anything).
+					Return(errors.New("db error")).
+					Once()
+			},
+			expectedStatus: http.StatusInternalServerError,
+			assertBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				var resp handler.JSONResponse[any]
+				err := json.Unmarshal(rec.Body.Bytes(), &resp)
+				require.NoError(t, err)
+
+				assert.Equal(t, http.StatusInternalServerError, resp.Status)
+			},
+		},
+		{
+			name:      "invalid json body",
+			projectID: "123",
+			requestBody: `{
+				"name": 123
+			}`,
+			setupMock:      func() {},
+			expectedStatus: http.StatusBadRequest,
+			assertBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusBadRequest, rec.Code)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			projectRepoMock.ExpectedCalls = nil
+
+			tt.setupMock()
+
+			req := httptest.NewRequest(http.MethodPatch, "/projects/"+tt.projectID, strings.NewReader(tt.requestBody))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			c.SetPathValues(echo.PathValues{
+				{Name: "id", Value: tt.projectID},
+			})
+
+			err := updateHandler.HandleFunc(c)
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.expectedStatus, rec.Code)

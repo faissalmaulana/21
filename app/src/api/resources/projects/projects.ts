@@ -1,5 +1,5 @@
 import type { Pagination, RawResponse } from "@/api/response"
-import type { Project, GetProjectsParams, PostProjectBodyParam } from "@/api/resources"
+import type { Project, GetProjectsParams, PostProjectBodyParam, UpdateProjectBodyParam } from "@/api/resources"
 import { AppError } from "@/lib/app-error"
 
 const PROJECTS_KEY = "projects"
@@ -149,5 +149,58 @@ async function deleteProject(id: string): Promise<string> {
   }
 }
 
+async function updateProject(param: { body: UpdateProjectBodyParam, id: string }): Promise<string> {
+  let response: Response
 
-export { PROJECTS_KEY, getProjects, postProject, deleteProject }
+  try {
+    response = await fetch(`http://localhost:8080/api/projects/${param.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(param.body),
+    })
+  } catch {
+    throw new AppError({
+      status: 0,
+      message: "Network error",
+    })
+  }
+
+  let result: RawResponse<string>
+
+  try {
+    result = await response.json()
+  } catch {
+    throw new AppError({
+      status: response.status,
+      message: "Invalid JSON response",
+    })
+  }
+
+  switch (result.status) {
+    case 200:
+      return result.data
+
+    case 400:
+      throw new AppError({
+        status: 400,
+        message: result?.error?.message ?? "Bad Request",
+      })
+
+    case 404:
+      throw new AppError({
+        status: 404,
+        message: result?.error?.message ?? "Project not found",
+      })
+
+    default:
+      throw new AppError({
+        status: result.status ?? response.status ?? 500,
+        message: result?.error?.message ?? "Internal Server Error",
+      })
+  }
+}
+
+
+export { PROJECTS_KEY, getProjects, postProject, deleteProject, updateProject }

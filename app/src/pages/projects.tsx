@@ -55,6 +55,7 @@ import {
   getProjects,
   postProject,
   PROJECTS_KEY,
+  updateProject,
   type GetProjectsParams,
 } from "@/api/resources"
 import { LoadingPage } from "@/components/loading-page"
@@ -84,6 +85,7 @@ export default function Projects() {
   const [projectName, setProjectName] = useState("")
   const [openAddDialog, setOpenAddDialog] = useState(false)
   const [deleteProjectId, setDeleteProjectId] = useState("")
+  const [updateProjectId, setUpdateProjectId] = useState("")
 
   const createProjectMutation = useMutation({
     mutationFn: postProject,
@@ -101,6 +103,19 @@ export default function Projects() {
       setAlertDeleteOpen(false)
       toast.success("Delete project succesfully")
     },
+  })
+
+  const updateProjectMutation = useMutation({
+    mutationFn: updateProject,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] })
+      setAlertArchiveOpen(false)
+      toast.success("Update project succesfully")
+    },
+    onError: () => {
+      setAlertArchiveOpen(false)
+      toast.error("Failed update project")
+    }
   })
 
   const debouncedSearch = useDebounce<string>(searchInput, 500)
@@ -134,6 +149,10 @@ export default function Projects() {
 
   const handleDeleteProject = (id: string) => {
     deleteProjectMutation.mutate(id)
+  }
+
+  const handleUpdateProjectToBeArchived = (id: string) => {
+    updateProjectMutation.mutate({ id, body: { to_be_archived: true } })
   }
 
   const handlePage = (val: number) => {
@@ -362,9 +381,10 @@ export default function Projects() {
                                   <DropdownMenuGroup>
                                     <DropdownMenuItem
                                       className={"cursor-pointer"}
-                                      onClick={() =>
+                                      onClick={() => {
                                         setAlertArchiveOpen(true)
-                                      }
+                                        setUpdateProjectId(project.id)
+                                      }}
                                     >
                                       <Archive />
                                       Archive
@@ -427,7 +447,7 @@ export default function Projects() {
                           <AlertDialogCancel>
                             Cancel
                           </AlertDialogCancel>
-                          <AlertDialogAction>
+                          <AlertDialogAction onClick={() => handleUpdateProjectToBeArchived(updateProjectId)}>
                             Continue
                           </AlertDialogAction>
                         </AlertDialogFooter>

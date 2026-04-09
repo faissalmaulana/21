@@ -16,6 +16,7 @@ type EchoMuxParams struct {
 	GetProjectsHandler   handler.Handle `name:"getProjectsHandler"`
 	PostProjectHandler   handler.Handle `name:"postProjectHandler"`
 	DeleteProjectHandler handler.Handle `name:"deleteProjectHandler"`
+	UpdateProjectHandler handler.Handle `name:"updateProjectHandler"`
 }
 
 func NewEchoMux(p EchoMuxParams) http.Handler {
@@ -31,6 +32,7 @@ func NewEchoMux(p EchoMuxParams) http.Handler {
 	projects.POST("", p.PostProjectHandler.HandleFunc)
 	projects.GET("", p.GetProjectsHandler.HandleFunc)
 	projects.DELETE(":id", p.DeleteProjectHandler.HandleFunc)
+	projects.PUT(":id", p.UpdateProjectHandler.HandleFunc)
 
 	return e
 }

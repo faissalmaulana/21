@@ -13,4 +13,9 @@ interface PostProjectBodyParam {
   name: string
 }
 
-export type { Project, GetProjectsParams, PostProjectBodyParam }
+interface UpdateProjectBodyParam {
+  name?: string
+  to_be_archived?: boolean
+}
+
+export type { Project, GetProjectsParams, PostProjectBodyParam, UpdateProjectBodyParam }

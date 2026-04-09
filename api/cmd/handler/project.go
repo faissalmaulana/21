@@ -205,3 +205,103 @@ func (dp *DeleteProjectHandler) HandleFunc(c *echo.Context) error {
 		Error:  nil,
 	})
 }
+
+type UpdateProjectHandler struct {
+	Validator           *validator.Validate
+	ValidatorSugaredMsg *service.SugaredErrorMessageValidator
+	ProjectRepository   repository.ProjectRepository
+}
+
+func NewUpdateProjectHandler(pr repository.ProjectRepository, val *validator.Validate, sugaredErr *service.SugaredErrorMessageValidator) *UpdateProjectHandler {
+
+	return &UpdateProjectHandler{
+		ProjectRepository:   pr,
+		Validator:           val,
+		ValidatorSugaredMsg: sugaredErr,
+	}
+}
+
+func (up *UpdateProjectHandler) HandleFunc(c *echo.Context) error {
+	var (
+		updateParams dto.UpdateProject
+	)
+
+	if err := c.Bind(&updateParams); err != nil {
+		return c.JSON(http.StatusBadRequest, JSONResponse[any]{
+			Status: http.StatusBadRequest,
+			Data:   nil,
+			Error:  &ErrorResponse{Message: err.Error()},
+		})
+	}
+
+	if err := up.Validator.Struct(updateParams); err != nil {
+		var errmsg strings.Builder
+
+		errs := up.ValidatorSugaredMsg.TranslateValidationErrors(err)
+		errName, ok := errs["name"]
+		if ok {
+			errmsg.WriteString(errName)
+		}
+
+		errArchived, ok := errs["to_be_archived"]
+		if ok {
+			errmsg.WriteString(",")
+			errmsg.WriteString(errArchived)
+		}
+
+		return c.JSON(http.StatusBadRequest, JSONResponse[any]{
+			Status: http.StatusBadRequest,
+			Data:   nil,
+			Error:  &ErrorResponse{Message: errmsg.String()},
+		})
+	}
+
+	project, err := up.ProjectRepository.GetProjectByID(c.Request().Context(), strings.TrimPrefix(updateParams.ID, "/"))
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return c.JSON(http.StatusNotFound, JSONResponse[any]{
+				Status: http.StatusNotFound,
+				Data:   nil,
+				Error:  &ErrorResponse{Message: err.Error()},
+			})
+		default:
+			return c.JSON(http.StatusInternalServerError, JSONResponse[any]{
+				Status: http.StatusInternalServerError,
+				Data:   nil,
+				Error:  &ErrorResponse{Message: err.Error()},
+			})
+		}
+	}
+
+	if updateParams.Name != nil {
+		project.Name = *updateParams.Name
+	}
+
+	if updateParams.ToBeArchived != nil {
+		project.IsArchive = updateParams.ToBeArchived
+	}
+
+	if updateParams.Name == nil && updateParams.ToBeArchived == nil {
+		return c.JSON(http.StatusBadRequest, JSONResponse[any]{
+			Status: http.StatusBadRequest,
+			Data:   nil,
+			Error:  &ErrorResponse{Message: "No fields provided to update"},
+		})
+	}
+
+	if err := up.ProjectRepository.UpdateProject(c.Request().Context(), project); err != nil {
+		return c.JSON(http.StatusInternalServerError, JSONResponse[any]{
+			Status: http.StatusInternalServerError,
+			Data:   nil,
+			Error:  &ErrorResponse{Message: err.Error()},
+		})
+	}
+
+	return c.JSON(http.StatusOK, JSONResponse[string]{
+		Status: http.StatusOK,
+		Data:   "Update Project Successfully",
+		Error:  nil,
+	})
+
+}

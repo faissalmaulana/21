@@ -34,6 +34,7 @@ func main() {
 			fx.Annotate(handler.NewGetProjectsHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"getProjectsHandler"`)),
 			fx.Annotate(handler.NewPostProjectHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"postProjectHandler"`)),
 			fx.Annotate(handler.NewDeleteProjectHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"deleteProjectHandler"`)),
+			fx.Annotate(handler.NewUpdateProjectHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"updateProjectHandler"`)),
 			zap.NewDevelopment,
 			validator.New,
 			service.NewSugaredErrorMessageValidator,
