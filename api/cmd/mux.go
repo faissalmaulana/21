@@ -14,6 +14,7 @@ type EchoMuxParams struct {
 
 	PingHandler        handler.Handle `name:"pingHandler"`
 	GetProjectsHandler handler.Handle `name:"getProjectsHandler"`
+	PostProjectHandler handler.Handle `name:"postProjectHandler"`
 }
 
 func NewEchoMux(p EchoMuxParams) http.Handler {
@@ -26,6 +27,7 @@ func NewEchoMux(p EchoMuxParams) http.Handler {
 	api.GET("/ping", p.PingHandler.HandleFunc)
 
 	projects := api.Group("/projects")
+	projects.POST("", p.PostProjectHandler.HandleFunc)
 	projects.GET("/", p.GetProjectsHandler.HandleFunc)
 
 	return e

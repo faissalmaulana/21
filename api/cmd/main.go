@@ -10,6 +10,8 @@ import (
 	"github.com/faissalmaulana/21/api/cmd/handler"
 	"github.com/faissalmaulana/21/api/internal/db"
 	"github.com/faissalmaulana/21/api/internal/repository"
+	"github.com/faissalmaulana/21/api/internal/service"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
@@ -30,7 +32,10 @@ func main() {
 			NewHttpServer,
 			fx.Annotate(handler.NewPingHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"pingHandler"`)),
 			fx.Annotate(handler.NewGetProjectsHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"getProjectsHandler"`)),
+			fx.Annotate(handler.NewPostProjectHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"postProjectHandler"`)),
 			zap.NewDevelopment,
+			validator.New,
+			service.NewSugaredErrorMessageValidator,
 			fx.Annotate(repository.NewProject, fx.As(new(repository.ProjectRepository))),
 			func(lc fx.Lifecycle, log *zap.Logger) (*sql.DB, error) {
 				pg := db.NewPostgresqlDB(
