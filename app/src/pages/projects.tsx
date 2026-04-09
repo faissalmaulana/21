@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/item"
 import { Separator } from "@/components/ui/separator"
 import { Link, useSearchParams } from "react-router"
-import { useEffect, useState, type SubmitEvent } from "react"
+import { useEffect, useRef, useState, type SubmitEvent } from "react"
 import { Switch } from "@/components/ui/switch"
 import {
   AlertDialog,
@@ -69,7 +69,8 @@ export default function Projects() {
   const [withArchive, setWithArchive] = useState<boolean>(
     () => uRLSearchParams.get("archive") === "true"
   )
-  const [page, setPage] = useState<string>(uRLSearchParams.get("page") ?? "")
+  const [page, setPage] = useState<string>(uRLSearchParams.get("page") ?? "1")
+  const headingRef = useRef<HTMLHeadingElement | null>(null)
 
 
   const queryClient = useQueryClient()
@@ -115,6 +116,11 @@ export default function Projects() {
 
   const handlePage = (val: number) => {
     setPage(String(val))
+
+    headingRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    })
   }
 
 
@@ -134,13 +140,17 @@ export default function Projects() {
         params.delete("archive")
       }
 
-      if (page) {
+      if (!page || page === "1") {
+        params.delete("page")
+      } else {
         params.set("page", page)
       }
+
 
       return params
     })
   }, [debouncedSearch, setURLSearchParams, withArchive, page])
+
 
   if (isPending) {
     return (
@@ -172,7 +182,7 @@ export default function Projects() {
       <div>
         <div className="mx-24 my-4">
           <div className="flex flex-col justify-between space-y-4">
-            <h2 className="text-2xl font-semibold">My Projects</h2>
+            <h2 ref={headingRef} className="text-2xl font-semibold">My Projects</h2>
             <div className="space-y-4">
               <div>
                 <InputGroup>

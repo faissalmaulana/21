@@ -45,7 +45,7 @@ async function getProjects(
     default:
       throw new AppError({
         status: result.status ?? 500,
-        message: result?.error?.message ?? "Internal Server Error",
+        message: "Internal Server Error",
       })
   }
 }
