@@ -3,8 +3,11 @@ package handler
 import (
 	"net/http"
 
+	"github.com/faissalmaulana/21/api/cmd/dto"
 	"github.com/faissalmaulana/21/api/internal/model"
 	"github.com/faissalmaulana/21/api/internal/repository"
+	"github.com/faissalmaulana/21/api/internal/service"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v5"
 )
 
@@ -91,5 +94,60 @@ func (p *GetProjectsHandler) HandleFunc(c *echo.Context) error {
 			Paginate: paginate,
 		},
 		Error: nil,
+	})
+}
+
+type PostProjectHandler struct {
+	ProjectRepository   repository.ProjectRepository
+	Validator           *validator.Validate
+	ValidatorSugaredMsg *service.SugaredErrorMessageValidator
+}
+
+func NewPostProjectHandler(
+	pr repository.ProjectRepository,
+	sugaredErr *service.SugaredErrorMessageValidator,
+	validator *validator.Validate,
+) *PostProjectHandler {
+	return &PostProjectHandler{
+		ProjectRepository:   pr,
+		ValidatorSugaredMsg: sugaredErr,
+		Validator:           validator,
+	}
+}
+
+func (pp *PostProjectHandler) HandleFunc(c *echo.Context) error {
+	var newProjectPayload dto.PostProject
+
+	if err := c.Bind(&newProjectPayload); err != nil {
+		return c.JSON(http.StatusBadRequest, JSONResponse[any]{
+			Status: http.StatusBadRequest,
+			Data:   nil,
+			Error:  &ErrorResponse{Message: err.Error()},
+		})
+	}
+
+	if err := pp.Validator.Struct(newProjectPayload); err != nil {
+		return c.JSON(http.StatusBadRequest, JSONResponse[any]{
+			Status: http.StatusBadRequest,
+			Data:   nil,
+			Error:  &ErrorResponse{Message: pp.ValidatorSugaredMsg.TranslateValidationErrors(err)["name"]},
+		})
+	}
+
+	_, err := pp.ProjectRepository.AddProject(c.Request().Context(), model.Project{
+		Name: newProjectPayload.Name,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, JSONResponse[any]{
+			Status: http.StatusInternalServerError,
+			Data:   nil,
+			Error:  &ErrorResponse{Message: err.Error()},
+		})
+	}
+
+	return c.JSON(http.StatusCreated, JSONResponse[string]{
+		Status: http.StatusCreated,
+		Data:   "Add New Project Successfully",
+		Error:  nil,
 	})
 }
