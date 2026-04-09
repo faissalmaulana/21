@@ -28,7 +28,7 @@ func NewEchoMux(p EchoMuxParams) http.Handler {
 
 	projects := api.Group("/projects")
 	projects.POST("", p.PostProjectHandler.HandleFunc)
-	projects.GET("/", p.GetProjectsHandler.HandleFunc)
+	projects.GET("", p.GetProjectsHandler.HandleFunc)
 
 	return e
 }
