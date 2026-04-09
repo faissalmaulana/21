@@ -6,7 +6,7 @@ API_PATH = api
 MIGRATE_PATH = $(API_PATH)/migrations
 DB_URL = $(DB_DSN)
 
-.PHONY: migrate migrate-up migrate-down migrate-back api-test client
+.PHONY: migrate migrate-up migrate-down migrate-back api-test client run-app
 
 migrate:
 	cd $(API_PATH) && migrate create -ext sql -dir migrations -seq $(name)
@@ -23,5 +23,11 @@ migrate-back:
 api-test:
 	cd api && go test ./... -count=1
 
+server:
+	cd api && air
+
 client:
 	cd app && pnpm run dev
+
+run-app:
+	make -j 2 server client
