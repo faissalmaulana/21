@@ -65,13 +65,18 @@ export default function Projects() {
   const [alertArchiveOpen, setAlertArchiveOpen] = useState(false)
   const [alertDeleteOpen, setAlertDeleteOpen] = useState(false)
   const [uRLSearchParams, setURLSearchParams] = useSearchParams()
-  const [searchInput, setSearchInput] = useState<string>(uRLSearchParams.get("search") ?? "")
+  const [searchInput, setSearchInput] = useState<string>(
+    uRLSearchParams.get("search") ?? ""
+  )
   const [withArchive, setWithArchive] = useState<boolean>(
     () => uRLSearchParams.get("archive") === "true"
   )
-  const [page, setPage] = useState<string>(uRLSearchParams.get("page") ?? "1")
+  const [page, setPage] = useState<string>(
+    uRLSearchParams.get("page") ?? "1"
+  )
   const headingRef = useRef<HTMLHeadingElement | null>(null)
-
+  const prevSearchRef = useRef<string>("")
+  const prevArchiveRef = useRef<boolean>(withArchive)
 
   const queryClient = useQueryClient()
   const [projectName, setProjectName] = useState("")
@@ -91,8 +96,9 @@ export default function Projects() {
   const queryOpt: GetProjectsParams = {
     search: debouncedSearch,
     withArchive: withArchive,
-    page
+    page,
   }
+
   const { data, isPending, isError, error } = useQuery({
     queryKey: [PROJECTS_KEY, queryOpt],
     queryFn: () => getProjects(queryOpt),
@@ -123,10 +129,15 @@ export default function Projects() {
     })
   }
 
-
   useEffect(() => {
     setURLSearchParams((prev) => {
       const params = new URLSearchParams(prev)
+
+      const prevSearch = prevSearchRef.current
+      const prevArchive = prevArchiveRef.current
+
+      const isNewSearch = debouncedSearch !== prevSearch
+      const isArchiveChanged = withArchive !== prevArchive
 
       if (!debouncedSearch) {
         params.delete("search")
@@ -140,17 +151,23 @@ export default function Projects() {
         params.delete("archive")
       }
 
-      if (!page || page === "1") {
+      if ((isNewSearch && debouncedSearch) || isArchiveChanged) {
         params.delete("page")
+        handlePage(1)
       } else {
-        params.set("page", page)
+        if (!page || page === "1") {
+          params.delete("page")
+        } else {
+          params.set("page", page)
+        }
       }
 
+      prevSearchRef.current = debouncedSearch
+      prevArchiveRef.current = withArchive
 
       return params
     })
   }, [debouncedSearch, setURLSearchParams, withArchive, page])
-
 
   if (isPending) {
     return (
@@ -182,11 +199,20 @@ export default function Projects() {
       <div>
         <div className="mx-24 my-4">
           <div className="flex flex-col justify-between space-y-4">
-            <h2 ref={headingRef} className="text-2xl font-semibold">My Projects</h2>
+            <h2 ref={headingRef} className="text-2xl font-semibold">
+              My Projects
+            </h2>
             <div className="space-y-4">
               <div>
                 <InputGroup>
-                  <InputGroupInput autoComplete="false" placeholder="Search..." value={searchInput} onChange={(e) => handleSearchChangeInput(e.target.value)} />
+                  <InputGroupInput
+                    autoComplete="false"
+                    placeholder="Search..."
+                    value={searchInput}
+                    onChange={(e) =>
+                      handleSearchChangeInput(e.target.value)
+                    }
+                  />
                   <InputGroupAddon>
                     <Search />
                   </InputGroupAddon>
@@ -194,10 +220,17 @@ export default function Projects() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-x-4">
-                  <span className="text-muted-foreground">Archive only</span>
-                  <Switch className={"cursor-pointer"} checked={withArchive} onCheckedChange={handleWithArchive} />
+                  <span className="text-muted-foreground">
+                    Archive only
+                  </span>
+                  <Switch
+                    className={"cursor-pointer"}
+                    checked={withArchive}
+                    onCheckedChange={handleWithArchive}
+                  />
                 </div>
-                <Dialog open={openAddDialog}
+                <Dialog
+                  open={openAddDialog}
                   onOpenChange={(next) => {
                     if (createProjectMutation.isPending) return
 
@@ -219,15 +252,28 @@ export default function Projects() {
                       <DialogHeader>
                         <DialogTitle>Add project</DialogTitle>
                       </DialogHeader>
-                      <FieldGroup className={createProjectMutation.isError ? "gap-2 mt-2" : "gap-5"}>
+                      <FieldGroup
+                        className={
+                          createProjectMutation.isError
+                            ? "gap-2 mt-2"
+                            : "gap-5"
+                        }
+                      >
                         {createProjectMutation.isError && (
                           <p className="text-sm text-red-500">
-                            {(createProjectMutation.error as AppError).message}
+                            {
+                              (createProjectMutation.error as AppError)
+                                .message
+                            }
                           </p>
                         )}
                         <Field>
                           <Input
-                            className={createProjectMutation.isError ? "mt-0" : "mt-4"}
+                            className={
+                              createProjectMutation.isError
+                                ? "mt-0"
+                                : "mt-4"
+                            }
                             name="name"
                             autoFocus
                             value={projectName}
@@ -242,13 +288,19 @@ export default function Projects() {
                       </FieldGroup>
                       <DialogFooter>
                         <DialogClose
-                          render={<Button variant="outline">Cancel</Button>}
+                          render={
+                            <Button variant="outline">
+                              Cancel
+                            </Button>
+                          }
                         />
                         <Button
                           type="submit"
                           disabled={createProjectMutation.isPending}
                         >
-                          {createProjectMutation.isPending ? "Saving..." : "Save changes"}
+                          {createProjectMutation.isPending
+                            ? "Saving..."
+                            : "Save changes"}
                         </Button>
                       </DialogFooter>
                     </form>
@@ -261,109 +313,132 @@ export default function Projects() {
                 {`${data.pagination?.total_items_in_page ?? 0} projects`}
               </h4>
               <Separator />
-              {data.projects.length !== 0 && data.pagination !== null && (
-                <>
-                  <div className="my-3">
-                    <ItemGroup>
-                      {data.projects.map((project) => (
-                        <Item key={project.id}>
-                          <ItemMedia variant="icon">
-                            <Hash />
-                          </ItemMedia>
-                          <ItemContent>
-                            <Link to={project.id}>
-                              <ItemTitle>{project.name}</ItemTitle>
-                            </Link>
-                          </ItemContent>
-                          <ItemActions>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                render={
-                                  <Button
-                                    variant={"ghost"}
-                                    className={"cursor-pointer"}
-                                  >
-                                    <Ellipsis />
-                                  </Button>
-                                }
-                              />
-                              <DropdownMenuContent>
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    className={"cursor-pointer"}
-                                    onClick={() => setAlertArchiveOpen(true)}
-                                  >
-                                    <Archive />
-                                    Archive
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="cursor-pointer text-red-500"
-                                    onClick={() => setAlertDeleteOpen(true)}
-                                  >
-                                    <Trash />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </ItemActions>
-                        </Item>
-                      ))}
-                    </ItemGroup>
-                  </div>
-                  <div className="self-end">
-                    <Pagination>
-                      <PaginationContent>
-                        {Array.from(
-                          { length: data.pagination?.total_pages ?? 1 },
-                          (_, i) => (
-                            <PaginationItem key={i}>
-                              <Button onClick={() => handlePage(i + 1)} variant={"ghost"} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium size-9 hover:bg-muted hover:text-foreground">
-                                {i + 1}
-                              </Button>
-                            </PaginationItem>
-                          )
-                        )}
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                  {/*ARCHIVE ALERT*/}
-                  <AlertDialog
-                    open={alertArchiveOpen}
-                    onOpenChange={setAlertArchiveOpen}
-                  >
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Are you absolutely sure?
-                        </AlertDialogTitle>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction>Continue</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+              {data.projects.length !== 0 &&
+                data.pagination !== null && (
+                  <>
+                    <div className="my-3">
+                      <ItemGroup>
+                        {data.projects.map((project) => (
+                          <Item key={project.id}>
+                            <ItemMedia variant="icon">
+                              <Hash />
+                            </ItemMedia>
+                            <ItemContent>
+                              <Link to={project.id}>
+                                <ItemTitle>
+                                  {project.name}
+                                </ItemTitle>
+                              </Link>
+                            </ItemContent>
+                            <ItemActions>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  render={
+                                    <Button
+                                      variant={"ghost"}
+                                      className={"cursor-pointer"}
+                                    >
+                                      <Ellipsis />
+                                    </Button>
+                                  }
+                                />
+                                <DropdownMenuContent>
+                                  <DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                      className={"cursor-pointer"}
+                                      onClick={() =>
+                                        setAlertArchiveOpen(true)
+                                      }
+                                    >
+                                      <Archive />
+                                      Archive
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="cursor-pointer text-red-500"
+                                      onClick={() =>
+                                        setAlertDeleteOpen(true)
+                                      }
+                                    >
+                                      <Trash />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </ItemActions>
+                          </Item>
+                        ))}
+                      </ItemGroup>
+                    </div>
+                    <div className="self-end">
+                      <Pagination>
+                        <PaginationContent>
+                          {Array.from(
+                            {
+                              length:
+                                data.pagination?.total_pages ?? 1,
+                            },
+                            (_, i) => (
+                              <PaginationItem key={i}>
+                                <Button
+                                  onClick={() =>
+                                    handlePage(i + 1)
+                                  }
+                                  variant={"ghost"}
+                                  className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium size-9 hover:bg-muted hover:text-foreground"
+                                >
+                                  {i + 1}
+                                </Button>
+                              </PaginationItem>
+                            )
+                          )}
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
 
-                  {/*DELETE ALERT*/}
-                  <AlertDialog
-                    open={alertDeleteOpen}
-                    onOpenChange={setAlertDeleteOpen}
-                  >
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Are you absolutely sure?
-                        </AlertDialogTitle>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction>Continue</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
+                    <AlertDialog
+                      open={alertArchiveOpen}
+                      onOpenChange={setAlertArchiveOpen}
+                    >
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Are you absolutely sure?
+                          </AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction>
+                            Continue
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+
+                    <AlertDialog
+                      open={alertDeleteOpen}
+                      onOpenChange={setAlertDeleteOpen}
+                    >
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Are you absolutely sure?
+                          </AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction>
+                            Continue
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
             </div>
           </div>
         </div>

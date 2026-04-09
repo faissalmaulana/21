@@ -75,10 +75,7 @@ func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Proje
 
 	query := `
         SELECT id, name
-        FROM projects
-        WHERE name ILIKE '%' || $1 || '%'
-          AND is_archive = $2
-        ORDER BY created_at DESC
+        FROM (SELECT id,name FROM projects  WHERE name ILIKE '%' || $1 || '%' AND is_archive = $2 ORDER BY created_at DESC) as p
         LIMIT $3 OFFSET $4`
 
 	rows, err := p.db.QueryContext(ctx, query, pp.Search, pp.IsArchive, pp.Size, offset)
