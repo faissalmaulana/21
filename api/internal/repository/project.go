@@ -69,6 +69,8 @@ func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Proje
 
 	if pp.Page <= 1 {
 		offset = 0
+		// if it < 1 the return pagination fallback to 1
+		pp.Page = 1
 	} else {
 		offset = pp.Page * pp.Size
 	}
