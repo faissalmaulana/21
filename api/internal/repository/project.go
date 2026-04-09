@@ -65,18 +65,20 @@ func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Proje
 	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
 	defer cancel()
 
-	var offset int
-
 	if pp.Page < 1 {
 		pp.Page = 1
 	}
 
-	offset = (pp.Page - 1) * pp.Size
+	offset := (pp.Page - 1) * pp.Size
 
 	query := `
-        SELECT id, name
-        FROM (SELECT id,name FROM projects  WHERE name ILIKE '%' || $1 || '%' AND is_archive = $2 ORDER BY created_at DESC) as p
-        LIMIT $3 OFFSET $4`
+        SELECT id, name, COUNT(*) OVER() AS total_count
+        FROM projects
+        WHERE name ILIKE '%' || $1 || '%'
+          AND is_archive = $2
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4
+    `
 
 	rows, err := p.db.QueryContext(ctx, query, pp.Search, pp.IsArchive, pp.Size, offset)
 	if err != nil {
@@ -86,25 +88,22 @@ func (p *Project) Projects(ctx context.Context, pp ProjectsParam) ([]model.Proje
 	defer rows.Close()
 
 	projects := make([]model.Project, 0)
+	var totalItems int64 = 0
 
 	for rows.Next() {
 		project := new(model.Project)
-		if err := rows.Scan(&project.ID, &project.Name); err != nil {
+		var count int64
+
+		if err := rows.Scan(&project.ID, &project.Name, &count); err != nil {
 			p.log.Error("Error scan project", zap.Error(err))
 			return nil, model.Pagination{}, MapDBError(err)
 		}
+
+		totalItems = count
 		projects = append(projects, *project)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, model.Pagination{}, MapDBError(err)
-	}
-
-	var totalItems int64
-
-	err = p.db.QueryRowContext(ctx, `SELECT COUNT(id) FROM projects`).Scan(&totalItems)
-	if err != nil {
-		p.log.Error("Error counting projects", zap.Error(err))
 		return nil, model.Pagination{}, MapDBError(err)
 	}
 

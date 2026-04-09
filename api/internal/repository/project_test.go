@@ -70,7 +70,7 @@ func TestProject(t *testing.T) {
 					Page:             1,
 					Size:             10,
 					TotalItemsInPage: 7,
-					TotalItems:       10,
+					TotalItems:       7,
 					TotalPages:       1,
 				},
 				queryParams: repository.ProjectsParam{
@@ -86,7 +86,7 @@ func TestProject(t *testing.T) {
 					Page:             1,
 					Size:             10,
 					TotalItemsInPage: 1,
-					TotalItems:       10,
+					TotalItems:       1,
 					TotalPages:       1,
 				},
 				queryParams: repository.ProjectsParam{
@@ -107,7 +107,7 @@ func TestProject(t *testing.T) {
 					Page:             1,
 					Size:             10,
 					TotalItemsInPage: 3,
-					TotalItems:       10,
+					TotalItems:       3,
 					TotalPages:       1,
 				},
 				queryParams: repository.ProjectsParam{
@@ -126,7 +126,7 @@ func TestProject(t *testing.T) {
 					Page:             1,
 					Size:             10,
 					TotalItemsInPage: 1,
-					TotalItems:       10,
+					TotalItems:       1,
 					TotalPages:       1,
 				},
 				queryParams: repository.ProjectsParam{
@@ -144,8 +144,8 @@ func TestProject(t *testing.T) {
 					Page:             1,
 					Size:             10,
 					TotalItemsInPage: 0,
-					TotalItems:       10,
-					TotalPages:       1,
+					TotalItems:       0,
+					TotalPages:       0,
 				},
 				queryParams: repository.ProjectsParam{
 					Search: "lizzy",
