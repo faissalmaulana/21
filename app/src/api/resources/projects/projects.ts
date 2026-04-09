@@ -97,4 +97,57 @@ async function postProject(body: PostProjectBodyParam): Promise<string> {
   }
 }
 
-export { PROJECTS_KEY, getProjects, postProject }
+async function deleteProject(id: string): Promise<string> {
+  let response: Response
+
+  try {
+    response = await fetch(`http://localhost:8080/api/projects/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+  } catch {
+    throw new AppError({
+      status: 0,
+      message: "Network error",
+    })
+  }
+
+  let result: RawResponse<string>
+
+  try {
+    result = await response.json()
+  } catch {
+    throw new AppError({
+      status: response.status,
+      message: "Invalid JSON response",
+    })
+  }
+
+  switch (result.status) {
+    case 200:
+      return result.data
+
+    case 400:
+      throw new AppError({
+        status: 400,
+        message: result?.error?.message ?? "Bad Request",
+      })
+
+    case 404:
+      throw new AppError({
+        status: 404,
+        message: result?.error?.message ?? "Project not found",
+      })
+
+    default:
+      throw new AppError({
+        status: result.status ?? response.status ?? 500,
+        message: result?.error?.message ?? "Internal Server Error",
+      })
+  }
+}
+
+
+export { PROJECTS_KEY, getProjects, postProject, deleteProject }

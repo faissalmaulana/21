@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/faissalmaulana/21/api/cmd/dto"
 	constant "github.com/faissalmaulana/21/api/internal/const"
@@ -161,6 +163,45 @@ func (pp *PostProjectHandler) HandleFunc(c *echo.Context) error {
 	return c.JSON(http.StatusCreated, JSONResponse[string]{
 		Status: http.StatusCreated,
 		Data:   "Add New Project Successfully",
+		Error:  nil,
+	})
+}
+
+type DeleteProjectHandler struct {
+	ProjectRepository repository.ProjectRepository
+}
+
+func NewDeleteProjectHandler(pr repository.ProjectRepository) *DeleteProjectHandler {
+
+	return &DeleteProjectHandler{
+		ProjectRepository: pr,
+	}
+}
+
+func (dp *DeleteProjectHandler) HandleFunc(c *echo.Context) error {
+	id := strings.TrimPrefix(c.Param("id"), "/")
+
+	deletedProjectId, err := dp.ProjectRepository.DeleteProjectByID(c.Request().Context(), id)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return c.JSON(http.StatusNotFound, JSONResponse[any]{
+				Status: http.StatusNotFound,
+				Data:   nil,
+				Error:  &ErrorResponse{Message: err.Error()},
+			})
+		default:
+			return c.JSON(http.StatusInternalServerError, JSONResponse[any]{
+				Status: http.StatusInternalServerError,
+				Data:   nil,
+				Error:  &ErrorResponse{Message: err.Error()},
+			})
+		}
+	}
+
+	return c.JSON(http.StatusOK, JSONResponse[string]{
+		Status: http.StatusOK,
+		Data:   fmt.Sprintf("Project with id %s deleted successfully", deletedProjectId),
 		Error:  nil,
 	})
 }

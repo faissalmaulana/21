@@ -51,6 +51,7 @@ import { Field, FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  deleteProject,
   getProjects,
   postProject,
   PROJECTS_KEY,
@@ -60,6 +61,7 @@ import { LoadingPage } from "@/components/loading-page"
 import { ErrorPage } from "@/components/error-page"
 import { AppError } from "@/lib/app-error"
 import useDebounce from "@/hooks/use-debounce"
+import { toast } from "sonner"
 
 export default function Projects() {
   const [alertArchiveOpen, setAlertArchiveOpen] = useState(false)
@@ -81,6 +83,7 @@ export default function Projects() {
   const queryClient = useQueryClient()
   const [projectName, setProjectName] = useState("")
   const [openAddDialog, setOpenAddDialog] = useState(false)
+  const [deleteProjectId, setDeleteProjectId] = useState("")
 
   const createProjectMutation = useMutation({
     mutationFn: postProject,
@@ -88,6 +91,15 @@ export default function Projects() {
       queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] })
       setProjectName("")
       setOpenAddDialog(false)
+    },
+  })
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: deleteProject,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] })
+      setAlertDeleteOpen(false)
+      toast.success("Delete project succesfully")
     },
   })
 
@@ -118,6 +130,10 @@ export default function Projects() {
     createProjectMutation.mutate({
       name: projectName,
     })
+  }
+
+  const handleDeleteProject = (id: string) => {
+    deleteProjectMutation.mutate(id)
   }
 
   const handlePage = (val: number) => {
@@ -355,9 +371,10 @@ export default function Projects() {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       className="cursor-pointer text-red-500"
-                                      onClick={() =>
+                                      onClick={() => {
                                         setAlertDeleteOpen(true)
-                                      }
+                                        setDeleteProjectId(project.id)
+                                      }}
                                     >
                                       <Trash />
                                       Delete
@@ -431,7 +448,7 @@ export default function Projects() {
                           <AlertDialogCancel>
                             Cancel
                           </AlertDialogCancel>
-                          <AlertDialogAction>
+                          <AlertDialogAction onClick={() => handleDeleteProject(deleteProjectId)}>
                             Continue
                           </AlertDialogAction>
                         </AlertDialogFooter>

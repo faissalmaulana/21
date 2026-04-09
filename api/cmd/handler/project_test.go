@@ -170,3 +170,86 @@ func TestPostProject(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteProject(t *testing.T) {
+	e := echo.New()
+
+	projectRepoMock := new(mock.ProjectRepositoryMock)
+
+	deleteHandler := handler.DeleteProjectHandler{
+		ProjectRepository: projectRepoMock,
+	}
+
+	tests := []struct {
+		name           string
+		projectID      string
+		setupMock      func()
+		expectedStatus int
+		assertBody     func(t *testing.T, rec *httptest.ResponseRecorder)
+	}{
+		{
+			name:      "success delete",
+			projectID: "123",
+			setupMock: func() {
+				projectRepoMock.
+					On("DeleteProjectByID", testifyMock.Anything, "123").
+					Return("123", nil).
+					Once()
+			},
+			expectedStatus: http.StatusOK,
+			assertBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				expected := `{
+					"status":200,
+					"data":"Project with id 123 deleted successfully",
+					"error":null
+				}`
+				assert.JSONEq(t, expected, rec.Body.String())
+			},
+		},
+		{
+			name:      "not found project",
+			projectID: "999",
+			setupMock: func() {
+				projectRepoMock.
+					On("DeleteProjectByID", testifyMock.Anything, "999").
+					Return("", repository.ErrNotFound).
+					Once()
+			},
+			expectedStatus: http.StatusNotFound,
+			assertBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				var resp handler.JSONResponse[any]
+				err := json.Unmarshal(rec.Body.Bytes(), &resp)
+				require.NoError(t, err)
+
+				assert.Equal(t, http.StatusNotFound, resp.Status)
+				assert.Nil(t, resp.Data)
+				require.NotNil(t, resp.Error)
+				assert.Contains(t, resp.Error.Message, "not found")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			projectRepoMock.ExpectedCalls = nil
+
+			tt.setupMock()
+
+			req := httptest.NewRequest(http.MethodDelete, "/projects/"+tt.projectID, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			c.SetPathValues(echo.PathValues{
+				{Name: "id", Value: tt.projectID},
+			})
+
+			err := deleteHandler.HandleFunc(c)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedStatus, rec.Code)
+			tt.assertBody(t, rec)
+
+			projectRepoMock.AssertExpectations(t)
+		})
+	}
+}

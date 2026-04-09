@@ -12,9 +12,10 @@ import (
 type EchoMuxParams struct {
 	fx.In
 
-	PingHandler        handler.Handle `name:"pingHandler"`
-	GetProjectsHandler handler.Handle `name:"getProjectsHandler"`
-	PostProjectHandler handler.Handle `name:"postProjectHandler"`
+	PingHandler          handler.Handle `name:"pingHandler"`
+	GetProjectsHandler   handler.Handle `name:"getProjectsHandler"`
+	PostProjectHandler   handler.Handle `name:"postProjectHandler"`
+	DeleteProjectHandler handler.Handle `name:"deleteProjectHandler"`
 }
 
 func NewEchoMux(p EchoMuxParams) http.Handler {
@@ -29,6 +30,7 @@ func NewEchoMux(p EchoMuxParams) http.Handler {
 	projects := api.Group("/projects")
 	projects.POST("", p.PostProjectHandler.HandleFunc)
 	projects.GET("", p.GetProjectsHandler.HandleFunc)
+	projects.DELETE(":id", p.DeleteProjectHandler.HandleFunc)
 
 	return e
 }
