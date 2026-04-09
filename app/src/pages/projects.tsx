@@ -94,6 +94,10 @@ export default function Projects() {
       setProjectName("")
       setOpenAddDialog(false)
     },
+    onError: () => {
+      setOpenAddDialog(false)
+      toast.error("Failed to add new project")
+    }
   })
 
   const deleteProjectMutation = useMutation({
