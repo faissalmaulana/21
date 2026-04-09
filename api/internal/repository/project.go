@@ -159,13 +159,20 @@ func (p *Project) UpdateProject(ctx context.Context, project model.Project) erro
 	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
 	defer cancel()
 
+	var archive bool
 	foundProject, err := p.GetProjectByID(ctx, project.ID)
 	if err != nil {
 		p.log.Error("Error get project", zap.Error(err))
 		return MapDBError(err)
 	}
 
-	_, err = p.db.ExecContext(ctx, "UPDATE projects SET name = $1, is_archive = $2 WHERE id = $3", project.Name, *project.IsArchive, foundProject.ID)
+	if project.IsArchive == nil {
+		archive = *foundProject.IsArchive
+	} else {
+		archive = *project.IsArchive
+	}
+
+	_, err = p.db.ExecContext(ctx, "UPDATE projects SET name = $1, is_archive = $2 WHERE id = $3", project.Name, archive, foundProject.ID)
 	if err != nil {
 		p.log.Error("Error update project", zap.Error(err))
 		return MapDBError(err)
