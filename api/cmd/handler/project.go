@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/faissalmaulana/21/api/cmd/dto"
+	constant "github.com/faissalmaulana/21/api/internal/const"
 	"github.com/faissalmaulana/21/api/internal/model"
 	"github.com/faissalmaulana/21/api/internal/repository"
 	"github.com/faissalmaulana/21/api/internal/service"
@@ -39,7 +40,7 @@ type ProjectResponse struct {
 
 type GetProjectsResponse struct {
 	Projects []ProjectResponse `json:"projects"`
-	Paginate model.Pagination  `json:"paginate"`
+	Paginate model.Pagination  `json:"pagination"`
 }
 
 func (p *GetProjectsHandler) HandleFunc(c *echo.Context) error {
@@ -62,6 +63,7 @@ func (p *GetProjectsHandler) HandleFunc(c *echo.Context) error {
 	projectParam := repository.ProjectsParam{
 		Search:    search,
 		IsArchive: onlyArchive,
+		Size:      constant.PaginateSize,
 	}
 
 	projects, paginate, err := p.ProjectRepository.Projects(c.Request().Context(), projectParam)
