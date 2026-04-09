@@ -103,6 +103,10 @@ export default function Projects() {
       setAlertDeleteOpen(false)
       toast.success("Delete project succesfully")
     },
+    onError: () => {
+      setAlertDeleteOpen(false)
+      toast.error("Failed to delete project")
+    }
   })
 
   const updateProjectMutation = useMutation({
