@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/faissalmaulana/21/api/cmd/dto"
 	constant "github.com/faissalmaulana/21/api/internal/const"
@@ -47,6 +48,7 @@ func (p *GetProjectsHandler) HandleFunc(c *echo.Context) error {
 	var (
 		search      string
 		onlyArchive bool
+		page        int
 	)
 
 	paramValues := c.QueryParams()
@@ -59,11 +61,20 @@ func (p *GetProjectsHandler) HandleFunc(c *echo.Context) error {
 		onlyArchive = true
 	}
 
+	if v := paramValues.Get("page"); v != "" {
+		if p, err := strconv.Atoi(v); err == nil {
+			page = p
+		} else {
+			page = 1
+		}
+	}
+
 	// TODO: add validation
 	projectParam := repository.ProjectsParam{
 		Search:    search,
 		IsArchive: onlyArchive,
 		Size:      constant.PaginateSize,
+		Page:      page,
 	}
 
 	projects, paginate, err := p.ProjectRepository.Projects(c.Request().Context(), projectParam)

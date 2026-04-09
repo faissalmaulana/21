@@ -6,6 +6,7 @@ interface Project {
 interface GetProjectsParams {
   search?: string
   withArchive?: boolean
+  page: string
 }
 
 interface PostProjectBodyParam {

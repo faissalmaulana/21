@@ -19,6 +19,11 @@ async function getProjects(
     url.searchParams.set("archive", "true")
   }
 
+  if (opt.page !== "1" && opt.page !== "") {
+    url.searchParams.set("page", opt.page)
+  }
+
+
   const response = await fetch(url.toString())
 
   const result: RawResponse<{

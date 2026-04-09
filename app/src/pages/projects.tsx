@@ -37,7 +37,6 @@ import {
   Pagination,
   PaginationContent,
   PaginationItem,
-  PaginationLink,
 } from "@/components/ui/pagination"
 import {
   Dialog,
@@ -70,6 +69,7 @@ export default function Projects() {
   const [withArchive, setWithArchive] = useState<boolean>(
     () => uRLSearchParams.get("archive") === "true"
   )
+  const [page, setPage] = useState<string>(uRLSearchParams.get("page") ?? "")
 
 
   const queryClient = useQueryClient()
@@ -89,7 +89,8 @@ export default function Projects() {
 
   const queryOpt: GetProjectsParams = {
     search: debouncedSearch,
-    withArchive: withArchive
+    withArchive: withArchive,
+    page
   }
   const { data, isPending, isError, error } = useQuery({
     queryKey: [PROJECTS_KEY, queryOpt],
@@ -112,6 +113,9 @@ export default function Projects() {
     })
   }
 
+  const handlePage = (val: number) => {
+    setPage(String(val))
+  }
 
 
   useEffect(() => {
@@ -130,9 +134,13 @@ export default function Projects() {
         params.delete("archive")
       }
 
+      if (page) {
+        params.set("page", page)
+      }
+
       return params
     })
-  }, [debouncedSearch, setURLSearchParams, withArchive])
+  }, [debouncedSearch, setURLSearchParams, withArchive, page])
 
   if (isPending) {
     return (
@@ -299,9 +307,9 @@ export default function Projects() {
                           { length: data.pagination?.total_pages ?? 1 },
                           (_, i) => (
                             <PaginationItem key={i}>
-                              <PaginationLink href={`?page=${i + 1}`}>
+                              <Button onClick={() => handlePage(i + 1)} variant={"ghost"} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium size-9 hover:bg-muted hover:text-foreground">
                                 {i + 1}
-                              </PaginationLink>
+                              </Button>
                             </PaginationItem>
                           )
                         )}
