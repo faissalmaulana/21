@@ -38,7 +38,10 @@ func TestGetProjects(t *testing.T) {
 	}
 
 	projectRepoMock.
-		On("Projects", testifyMock.Anything, repository.ProjectsParam{}).
+		On("Projects", testifyMock.Anything, repository.ProjectsParam{
+			// in handler, size has default value.
+			Size: constant.PaginateSize,
+		}).
 		Return(expectedProjects, expectedPagination, nil)
 
 	getProjectsHandler := handler.GetProjectsHandler{
