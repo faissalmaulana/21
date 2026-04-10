@@ -10,6 +10,14 @@ import (
 	"go.uber.org/zap"
 )
 
+type TaskRepository interface {
+	AddTask(ctx context.Context, task model.Task) (string, error)
+	TaskByID(ctx context.Context, id string) (model.Task, error)
+	UpdateTask(ctx context.Context, id string, updatedTask model.Task) error
+	Tasks(ctx context.Context) ([]model.Task, error)
+	DeleteTaskByID(ctx context.Context, id string) (string, error)
+}
+
 type Task struct {
 	DB  *sql.DB
 	Log *zap.Logger
@@ -151,7 +159,7 @@ func (t *Task) Tasks(ctx context.Context) ([]model.Task, error) {
 	return tasks, nil
 }
 
-func (t *Task) DeleteProjectByID(ctx context.Context, id string) (string, error) {
+func (t *Task) DeleteTaskByID(ctx context.Context, id string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
 	defer cancel()
 
