@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -68,4 +69,31 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(code)
+}
+
+func seedProject(t *testing.T, db *sql.DB) string {
+	t.Helper()
+
+	var newProjectID string
+
+	err := db.QueryRow("INSERT INTO projects(name) VALUES($1) RETURNING id", "New Project").Scan(&newProjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return newProjectID
+}
+
+// seedTask seeds without project_id inserted
+func seedTask(t *testing.T, db *sql.DB) string {
+	t.Helper()
+
+	var newTaskID string
+
+	err := db.QueryRow("INSERT INTO tasks(name,start_at) VALUES($1,$2) RETURNING id", "New Task", time.Now()).Scan(&newTaskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return newTaskID
 }

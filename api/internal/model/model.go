@@ -17,3 +17,24 @@ type Pagination struct {
 	TotalItems       int `json:"total_items"`
 	TotalPages       int `json:"total_pages"`
 }
+
+type Status int
+
+func (s Status) String() string {
+	return []string{"open", "done"}[s]
+}
+
+const (
+	Open Status = iota
+	Done
+)
+
+type Task struct {
+	ID         string     `json:"id"`
+	ProjectID  *string    `json:"project_id"`
+	Name       string     `json:"name"`
+	Status     Status     `json:"status"`
+	StartAt    time.Time  `json:"start_at"`
+	CreatedAt  *time.Time `json:"created_at"`
+	LastUpdate *time.Time `json:"last_update"`
+}
