@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Project struct {
 	ID   string
@@ -32,9 +34,10 @@ const (
 type Task struct {
 	ID         string     `json:"id"`
 	ProjectID  *string    `json:"project_id"`
+	Project    *Project   `json:"project"`
 	Name       string     `json:"name"`
-	Status     Status     `json:"status"`
-	StartAt    time.Time  `json:"start_at"`
+	Status     *Status    `json:"status"`
+	StartAt    *time.Time `json:"start_at"`
 	CreatedAt  *time.Time `json:"created_at"`
 	LastUpdate *time.Time `json:"last_update"`
 }

@@ -61,7 +61,105 @@ func (t *Task) TaskByID(ctx context.Context, id string) (model.Task, error) {
 		return model.Task{}, MapDBError(err)
 	}
 
-	task.Status = utils.ToStatus(rawStatus)
+	s := utils.ToStatus(rawStatus)
+	task.Status = &s
 
 	return task, nil
+}
+
+func (t *Task) UpdateTask(ctx context.Context, id string, updatedTask model.Task) error {
+	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
+	defer cancel()
+
+	task, err := t.TaskByID(ctx, id)
+	if err != nil {
+		t.Log.Error("Error get task", zap.Error(err))
+		return MapDBError(err)
+	}
+
+	if updatedTask.Name != "" {
+		task.Name = updatedTask.Name
+	}
+
+	if updatedTask.ProjectID != nil {
+		task.ProjectID = updatedTask.ProjectID
+	}
+
+	if updatedTask.StartAt != nil {
+		task.StartAt = updatedTask.StartAt
+	}
+
+	if updatedTask.Status != nil {
+		task.Status = updatedTask.Status
+	}
+
+	_, err = t.DB.ExecContext(
+		ctx,
+		"UPDATE tasks SET name = $1, project_id = $2, start_at = $3, status = $4, last_update = NOW() WHERE id = $5",
+		task.Name,
+		task.ProjectID,
+		*task.StartAt,
+		task.Status.String(),
+		task.ID,
+	)
+	if err != nil {
+		t.Log.Error("Error update task", zap.Error(err))
+		return MapDBError(err)
+	}
+
+	return nil
+}
+
+func (t *Task) Tasks(ctx context.Context) ([]model.Task, error) {
+	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
+	defer cancel()
+
+	rows, err := t.DB.QueryContext(
+		ctx,
+		`SELECT id,name,project_id,status,start_at,p.id,p.name AS project_name
+		FROM tasks JOIN projects p ON p.id = project_id ORDER BY tasks.created_at DESC
+		`,
+	)
+	if err != nil {
+		t.Log.Error("Error querying get tasks", zap.Error(err))
+		return nil, MapDBError(err)
+	}
+
+	tasks := make([]model.Task, 0)
+
+	for rows.Next() {
+		rawStatus := ""
+		task := model.Task{}
+		if err := rows.Scan(
+			&task.ID,
+			&task.Name,
+			&task.ProjectID,
+			&rawStatus,
+			&task.StartAt,
+			&task.Project.ID,
+			&task.Project.Name,
+		); err != nil {
+			t.Log.Error("Error populate task", zap.Error(err))
+			return nil, MapDBError(err)
+		}
+		s := utils.ToStatus(rawStatus)
+		task.Status = &s
+
+		tasks = append(tasks, task)
+	}
+
+	return tasks, nil
+}
+
+func (t *Task) DeleteProjectByID(ctx context.Context, id string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, constant.QueryTimeout)
+	defer cancel()
+
+	var deletedTaskID string
+	if err := t.DB.QueryRowContext(ctx, `DELETE FROM tasks WHERE id = $1 RETURNING id`, id).Scan(&deletedTaskID); err != nil {
+		t.Log.Error("Error delete task", zap.Error(err))
+		return "", MapDBError(err)
+	}
+
+	return id, nil
 }
