@@ -35,10 +35,17 @@ func main() {
 			fx.Annotate(handler.NewPostProjectHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"postProjectHandler"`)),
 			fx.Annotate(handler.NewDeleteProjectHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"deleteProjectHandler"`)),
 			fx.Annotate(handler.NewUpdateProjectHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"updateProjectHandler"`)),
+			// TASKS HANDLERS
+			fx.Annotate(handler.NewPostTaskHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"postTaskHandler"`)),
+			fx.Annotate(handler.NewUpdateTaskHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"updateTaskHandler"`)),
+			fx.Annotate(handler.NewGetTaskByIDHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"getTaskByIDHandler"`)),
+			fx.Annotate(handler.NewGetTasksHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"getTasksHandler"`)),
+			fx.Annotate(handler.NewDeleteTaskByIDHandler, fx.As(new(handler.Handle)), fx.ResultTags(`name:"deleteTaskByIDHandler"`)),
 			zap.NewDevelopment,
 			validator.New,
 			service.NewSugaredErrorMessageValidator,
 			fx.Annotate(repository.NewProject, fx.As(new(repository.ProjectRepository))),
+			fx.Annotate(repository.NewTask, fx.As(new(repository.TaskRepository))),
 			func(lc fx.Lifecycle, log *zap.Logger) (*sql.DB, error) {
 				pg := db.NewPostgresqlDB(
 					dbport,

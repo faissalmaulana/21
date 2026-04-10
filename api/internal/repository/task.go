@@ -124,9 +124,17 @@ func (t *Task) Tasks(ctx context.Context) ([]model.Task, error) {
 
 	rows, err := t.DB.QueryContext(
 		ctx,
-		`SELECT id,name,project_id,status,start_at,p.id,p.name AS project_name
-		FROM tasks JOIN projects p ON p.id = project_id ORDER BY tasks.created_at DESC
-		`,
+		`SELECT
+			tasks.id AS task_id,
+			tasks.name,
+			tasks.project_id,
+			tasks.status,
+			tasks.start_at,
+			p.id AS p_id,
+			p.name AS project_name
+		FROM tasks
+		JOIN projects AS p ON p.id = tasks.project_id
+		ORDER BY tasks.created_at DESC;`,
 	)
 	if err != nil {
 		t.Log.Error("Error querying get tasks", zap.Error(err))
